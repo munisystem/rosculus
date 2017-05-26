@@ -22,6 +22,6 @@ $ go get -d github.com/munisystem/rstack
 1. Run `gofmt -s`
 1. Create a new Pull Request
 
-## Author
+## License
 
-[munisystem](https://github.com/munisystem)
+MIT © [munisystem](https://github.com/munisystem)
