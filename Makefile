@@ -31,7 +31,7 @@ install:
 
 .PHONY: test
 test:
-	go test -cover -v $(go list ./... | grep -v /vendor/)
+	go test -cover -v `go list ./... | grep -v /vendor/`
 
 .PHONY: update-deps
 update-deps: dep
