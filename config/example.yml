@@ -1,0 +1,9 @@
+SourceDBInstanceIdentifier: cat
+PubliclyAccessible: true
+DBInstanceClass: db.m3.medium
+Current:
+  InstanceIdentifier: cat-blue
+  Endpoint: cat-blue.abcdefghijklmn.ap-northeast-1.rds.amazonaws.com
+Previous:
+  InstanceIdentifier: munisystem-green
+  Endpoint: cat-green.abcdefghijklmn.ap-northeast-1.rds.amazonaws.com
