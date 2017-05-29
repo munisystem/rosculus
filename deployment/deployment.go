@@ -25,16 +25,19 @@ type Previous struct {
 	Endpoint string `yaml:"Endpoint"`
 }
 
-func Load(deployment string) (*Deployment, error) {
+func Load(bucket, name string) (*Deployment, error) {
 	c := &Deployment{}
 
-	src := deployment + ".yml"
-	buf, err := ioutil.ReadFile(src)
+	key := name + ".yml"
+	buf, err := s3.Download(bucket, key)
 	if err != nil {
 		return nil, err
 	}
 
 	err = yaml.Unmarshal(buf, c)
+	if err != nil {
+		return nil, err
+	}
 
 	return c, nil;
 }
