@@ -1,8 +1,6 @@
 package deployment
 
 import (
-	"io/ioutil"
-
 	yaml "gopkg.in/yaml.v2"
 	"github.com/munisystem/rstack/aws/s3"
 )
