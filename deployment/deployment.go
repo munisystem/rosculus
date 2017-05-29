@@ -4,6 +4,7 @@ import (
 	"io/ioutil"
 
 	yaml "gopkg.in/yaml.v2"
+	"github.com/munisystem/rstack/aws/s3"
 )
 
 type Deployment struct {
@@ -38,5 +39,16 @@ func Load(deployment string) (*Deployment, error) {
 	return c, nil;
 }
 
-func New() {
+func (dep *Deployment) New(bucket, name string) error {
+	str, err := yaml.Marshal(dep)
+	if err != nil {
+		return err
+	}
+
+	key := name + ".yml"
+	if err = s3.UploadConfig(bucket, key, []byte(str)); err != nil {
+		return err
+	}
+
+	return nil
 }
