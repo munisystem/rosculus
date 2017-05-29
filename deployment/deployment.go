@@ -40,7 +40,7 @@ func Load(bucket, name string) (*Deployment, error) {
 	return c, nil
 }
 
-func (dep *Deployment) New(bucket, name string) error {
+func (dep *Deployment) Put(bucket, name string) error {
 	str, err := yaml.Marshal(dep)
 	if err != nil {
 		return err

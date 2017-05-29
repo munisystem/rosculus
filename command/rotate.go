@@ -72,7 +72,10 @@ func (c *RotateCommand) Run(args []string) int {
 
 	dep.Current = cur
 	dep.Previous = prev
-	dep.New(bucket, name)
+	if err = dep.Put(bucket, name); err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return 1
+	}
 
 	return 0
 }

@@ -46,7 +46,7 @@ func (c *NewCommand) Run(args []string) int {
 		},
 	}
 
-	if err := dep.New(bucket, c.name); err != nil {
+	if err := dep.Put(bucket, c.name); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		return 1
 	}
