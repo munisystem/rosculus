@@ -25,6 +25,7 @@ func CopyInstance(sourceDBInstanceIdentifier, targetDBInstanceIdentifier, dbInst
 		TargetDBInstanceIdentifier: aws.String(targetDBInstanceIdentifier),
 		PubliclyAccessible:	aws.Bool(publiclyAccessible),
 		DBInstanceClass:	aws.String(dbInstanceClass),
+		UseLatestRestorableTime: aws.Bool(true),
 	}
 
 	resp, err := cli.RestoreDBInstanceToPointInTime(params)
