@@ -1,4 +1,4 @@
-package config
+package deployment
 
 import (
 	"io/ioutil"
@@ -6,7 +6,7 @@ import (
 	yaml "gopkg.in/yaml.v2"
 )
 
-type Config struct {
+type Deployment struct {
 	SourceDBInstanceIdentifier string `yaml:"SourceDBInstanceIdentifier"`
 	PubliclyAccessible bool `yaml:"PubliclyAccessible"`
 	DBInstanceClass string `yaml:"DBInstanceClass"`
@@ -24,8 +24,8 @@ type Previous struct {
 	Endpoint string `yaml:"Endpoint"`
 }
 
-func Load(deployment string) (*Config, error) {
-	c := &Config{}
+func Load(deployment string) (*Deployment, error) {
+	c := &Deployment{}
 
 	src := deployment + ".yml"
 	buf, err := ioutil.ReadFile(src)
@@ -36,4 +36,7 @@ func Load(deployment string) (*Config, error) {
 	err = yaml.Unmarshal(buf, c)
 
 	return c, nil;
+}
+
+func New() {
 }

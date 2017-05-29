@@ -1,4 +1,4 @@
-package config
+package deployment
 
 import (
 	"os"
@@ -7,7 +7,7 @@ import (
 )
 
 func TestLoad(t *testing.T) {
-	expected := &Config{
+	expected := &Deployment{
 		SourceDBInstanceIdentifier: "cat",
 		PubliclyAccessible: true,
 		DBInstanceClass: "db.d3.medium",
