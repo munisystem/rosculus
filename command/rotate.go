@@ -1,13 +1,14 @@
 package command
 
 import (
-	"strings"
-	"os"
-	"fmt"
 	"errors"
-	"github.com/munisystem/rstack/deployment"
-	"github.com/munisystem/rstack/aws/rds"
+	"fmt"
+	"os"
+	"strings"
 	"time"
+
+	"github.com/munisystem/rstack/aws/rds"
+	"github.com/munisystem/rstack/deployment"
 )
 
 type RotateCommand struct {
@@ -37,7 +38,7 @@ func (c *RotateCommand) Run(args []string) int {
 		return 1
 	}
 
-	fmt.Printf("Launch new RDS Instance '%s' from '%s'.", dep.Previous.InstanceIdentifier, dep.SourceDBInstanceIdentifier)
+	fmt.Printf("Launch new RDS Instance '%s' from '%s'\n", dep.Previous.InstanceIdentifier, dep.SourceDBInstanceIdentifier)
 	dbInstance, err := rds.CopyInstance(
 		dep.SourceDBInstanceIdentifier,
 		dep.Previous.InstanceIdentifier,
@@ -47,11 +48,11 @@ func (c *RotateCommand) Run(args []string) int {
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 	}
-	fmt.Printf("Launched. Please Wait RDS Instance ready.")
+	fmt.Println("Launched. Please Wait RDS Instance ready")
 
 	for {
-		if (*dbInstance.DBInstanceStatus == "available") {
-			fmt.Printf("%s is ready.", *dbInstance.DBName)
+		if *dbInstance.DBInstanceStatus == "available" {
+			fmt.Printf("%s is ready\n", *dbInstance.DBName)
 			break
 		}
 
@@ -59,14 +60,14 @@ func (c *RotateCommand) Run(args []string) int {
 		time.Sleep(30 * time.Second)
 	}
 
-	prev := deployment.Previous {
+	prev := deployment.Previous{
 		InstanceIdentifier: dep.Current.InstanceIdentifier,
-		Endpoint: dep.Current.Endpoint,
+		Endpoint:           dep.Current.Endpoint,
 	}
 
-	cur := deployment.Current {
+	cur := deployment.Current{
 		InstanceIdentifier: dep.Previous.InstanceIdentifier,
-		Endpoint: *dbInstance.Endpoint.Address,
+		Endpoint:           *dbInstance.Endpoint.Address,
 	}
 
 	dep.Current = cur

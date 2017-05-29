@@ -1,26 +1,26 @@
 package deployment
 
 import (
-	yaml "gopkg.in/yaml.v2"
 	"github.com/munisystem/rstack/aws/s3"
+	yaml "gopkg.in/yaml.v2"
 )
 
 type Deployment struct {
-	SourceDBInstanceIdentifier string `yaml:"SourceDBInstanceIdentifier"`
-	PubliclyAccessible bool `yaml:"PubliclyAccessible"`
-	DBInstanceClass string `yaml:"DBInstanceClass"`
-	Current Current `yaml:"Current"`
-	Previous Previous `yaml:"Previous"`
+	SourceDBInstanceIdentifier string   `yaml:"SourceDBInstanceIdentifier"`
+	PubliclyAccessible         bool     `yaml:"PubliclyAccessible"`
+	DBInstanceClass            string   `yaml:"DBInstanceClass"`
+	Current                    Current  `yaml:"Current"`
+	Previous                   Previous `yaml:"Previous"`
 }
 
 type Current struct {
 	InstanceIdentifier string `yaml:"InstanceIdentifier"`
-	Endpoint string `yaml:"Endpoint"`
+	Endpoint           string `yaml:"Endpoint"`
 }
 
 type Previous struct {
 	InstanceIdentifier string `yaml:"InstanceIdentifier"`
-	Endpoint string `yaml:"Endpoint"`
+	Endpoint           string `yaml:"Endpoint"`
 }
 
 func Load(bucket, name string) (*Deployment, error) {
@@ -37,7 +37,7 @@ func Load(bucket, name string) (*Deployment, error) {
 		return nil, err
 	}
 
-	return c, nil;
+	return c, nil
 }
 
 func (dep *Deployment) New(bucket, name string) error {

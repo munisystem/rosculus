@@ -1,11 +1,12 @@
 package s3
 
 import (
-	"github.com/aws/aws-sdk-go/service/s3"
-	awspkg "github.com/munisystem/rstack/aws"
-	"github.com/aws/aws-sdk-go/aws"
 	"bytes"
 	"io"
+
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/service/s3"
+	awspkg "github.com/munisystem/rstack/aws"
 )
 
 var (
@@ -24,7 +25,7 @@ func Download(bucket, key string) ([]byte, error) {
 
 	params := &s3.GetObjectInput{
 		Bucket: aws.String(bucket),
-		Key: 	aws.String(key),
+		Key:    aws.String(key),
 	}
 
 	resp, err := cli.GetObject(params)
@@ -41,9 +42,9 @@ func Upload(bucket, key string, body []byte) error {
 	cli := client()
 
 	params := &s3.PutObjectInput{
-		Bucket:	aws.String(bucket),
-		Key:	aws.String(key),
-		Body:	bytes.NewReader(body),
+		Bucket: aws.String(bucket),
+		Key:    aws.String(key),
+		Body:   bytes.NewReader(body),
 	}
 
 	if _, err := cli.PutObject(params); err != nil {

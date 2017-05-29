@@ -1,22 +1,23 @@
 package command
 
 import (
-	"strings"
-	"flag"
 	"errors"
+	"flag"
 	"fmt"
 	"os"
+	"strings"
+
 	"github.com/munisystem/rstack/deployment"
 )
 
 type NewCommand struct {
 	Meta
 
-	name string
+	name                       string
 	sourceDBInstanceIdentifier string
-	dbInstanceIdentifierBase string
-	publiclyAccessible bool
-	dbInstanceClass string
+	dbInstanceIdentifierBase   string
+	publiclyAccessible         bool
+	dbInstanceClass            string
 }
 
 func (c *NewCommand) Run(args []string) int {
@@ -33,15 +34,15 @@ func (c *NewCommand) Run(args []string) int {
 
 	dep := &deployment.Deployment{
 		SourceDBInstanceIdentifier: c.sourceDBInstanceIdentifier,
-		PubliclyAccessible: c.publiclyAccessible,
-		DBInstanceClass: c.dbInstanceClass,
-		Current: deployment.Current {
+		PubliclyAccessible:         c.publiclyAccessible,
+		DBInstanceClass:            c.dbInstanceClass,
+		Current: deployment.Current{
 			InstanceIdentifier: c.dbInstanceIdentifierBase + "-blue",
-			Endpoint: "",
+			Endpoint:           "",
 		},
-		Previous: deployment.Previous {
+		Previous: deployment.Previous{
 			InstanceIdentifier: c.dbInstanceIdentifierBase + "-green",
-			Endpoint: "",
+			Endpoint:           "",
 		},
 	}
 
