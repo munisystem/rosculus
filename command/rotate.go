@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"errors"
 	"github.com/munisystem/rstack/deployment"
+	"github.com/munisystem/rstack/aws/rds"
+	"time"
 )
 
 type RotateCommand struct {
@@ -32,9 +34,30 @@ func (c *RotateCommand) Run(args []string) int {
 	dep, err := deployment.Load(bucket, name)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
+		return 1
 	}
 
-	fmt.Println(dep)
+	fmt.Printf("Launch new RDS Instance '%s' from '%s'.", dep.Previous.InstanceIdentifier, dep.SourceDBInstanceIdentifier)
+	dbInstance, err := rds.CopyInstance(
+		dep.SourceDBInstanceIdentifier,
+		dep.Previous.InstanceIdentifier,
+		dep.DBInstanceClass,
+		dep.PubliclyAccessible,
+	)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+	}
+	fmt.Printf("Launched. Please Wait RDS Instance ready.")
+
+	for {
+		if (*dbInstance.DBInstanceStatus == "available") {
+			fmt.Printf("%s is ready.", *dbInstance.DBName)
+			break
+		}
+
+		fmt.Print(".")
+		time.Sleep(30 * time.Second)
+	}
 
 	return 0
 }
