@@ -13,7 +13,8 @@ type NewCommand struct {
 	Meta
 
 	name string
-	sourceDBIdentifier string
+	sourceDBInstanceIdentifier string
+	dbInstanceIdentifierBase string
 	publiclyAccessible bool
 	dbInstanceClass string
 }
@@ -31,15 +32,15 @@ func (c *NewCommand) Run(args []string) int {
 	}
 
 	dep := &deployment.Deployment{
-		SourceDBInstanceIdentifier: c.sourceDBIdentifier,
+		SourceDBInstanceIdentifier: c.sourceDBInstanceIdentifier,
 		PubliclyAccessible: c.publiclyAccessible,
 		DBInstanceClass: c.dbInstanceClass,
 		Current: deployment.Current {
-			InstanceIdentifier: "",
+			InstanceIdentifier: c.dbInstanceIdentifierBase + "-blue",
 			Endpoint: "",
 		},
 		Previous: deployment.Previous {
-			InstanceIdentifier: "",
+			InstanceIdentifier: c.dbInstanceIdentifierBase + "-green",
 			Endpoint: "",
 		},
 	}
@@ -54,7 +55,8 @@ func (c *NewCommand) Run(args []string) int {
 func (c *NewCommand) parseArgs(args []string) error {
 	flag := flag.NewFlagSet("rstack", flag.ContinueOnError)
 
-	flag.StringVar(&c.sourceDBIdentifier, "source-db-instance-identifier", "", "SourceDBInstanceIdentifier")
+	flag.StringVar(&c.sourceDBInstanceIdentifier, "source-db-instance-identifier", "", "SourceDBInstanceIdentifier")
+	flag.StringVar(&c.dbInstanceIdentifierBase, "db-instance-identifier-base", "", "DBInstanceIdentifierBase")
 	flag.BoolVar(&c.publiclyAccessible, "publicly-accessible", true, "PubliclyAccessible")
 	flag.StringVar(&c.dbInstanceClass, "db-instance-class", "db.m3.medium", "DBInstanceClass")
 
@@ -62,8 +64,12 @@ func (c *NewCommand) parseArgs(args []string) error {
 		return err
 	}
 
-	if c.sourceDBIdentifier == "" {
+	if c.sourceDBInstanceIdentifier == "" {
 		return errors.New("Please specify original DB instance identifier")
+	}
+
+	if c.dbInstanceIdentifierBase == "" {
+		return errors.New("Please specify DB instance identifier base")
 	}
 
 	if 0 < flag.NArg() {
