@@ -46,7 +46,7 @@ func (dep *Deployment) New(bucket, name string) error {
 	}
 
 	key := name + ".yml"
-	if err = s3.UploadConfig(bucket, key, []byte(str)); err != nil {
+	if err = s3.Upload(bucket, key, []byte(str)); err != nil {
 		return err
 	}
 

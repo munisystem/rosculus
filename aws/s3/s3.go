@@ -18,7 +18,7 @@ func client() *s3.S3 {
 	return s3cli
 }
 
-func UploadConfig(bucket, key string, body []byte) error {
+func Upload(bucket, key string, body []byte) error {
 	cli := client()
 
 	params := &s3.PutObjectInput{
