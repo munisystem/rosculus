@@ -5,6 +5,7 @@ import (
 	awspkg "github.com/munisystem/rstack/aws"
 	"github.com/aws/aws-sdk-go/aws"
 	"bytes"
+	"io"
 )
 
 var (
@@ -16,6 +17,24 @@ func client() *s3.S3 {
 		s3cli = s3.New(awspkg.Session())
 	}
 	return s3cli
+}
+
+func Download(bucket, key string) ([]byte, error) {
+	cli := client()
+
+	params := &s3.GetObjectInput{
+		Bucket: aws.String(bucket),
+		Key: 	aws.String(key),
+	}
+
+	resp, err := cli.GetObject(params)
+	if err != nil {
+		return nil, err
+	}
+
+	buf := new(bytes.Buffer)
+	io.Copy(buf, resp.Body)
+	return buf.Bytes(), nil
 }
 
 func Upload(bucket, key string, body []byte) error {
