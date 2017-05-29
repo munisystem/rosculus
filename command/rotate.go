@@ -59,6 +59,20 @@ func (c *RotateCommand) Run(args []string) int {
 		time.Sleep(30 * time.Second)
 	}
 
+	prev := deployment.Previous {
+		InstanceIdentifier: dep.Current.InstanceIdentifier,
+		Endpoint: dep.Current.Endpoint,
+	}
+
+	cur := deployment.Current {
+		InstanceIdentifier: dep.Previous.InstanceIdentifier,
+		Endpoint: *dbInstance.Endpoint.Address,
+	}
+
+	dep.Current = cur
+	dep.Previous = prev
+	dep.New(bucket, name)
+
 	return 0
 }
 
