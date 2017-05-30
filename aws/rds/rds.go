@@ -35,3 +35,32 @@ func CopyInstance(sourceDBInstanceIdentifier, targetDBInstanceIdentifier, dbInst
 
 	return resp.DBInstance, nil
 }
+
+func WaitReady(dbInstanceIdentifier string) error {
+	cli := client()
+
+	params := &rds.DescribeDBInstancesInput{
+		DBInstanceIdentifier: aws.String(dbInstanceIdentifier),
+	}
+
+	err := cli.WaitUntilDBInstanceAvailable(params)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func DescribeDBInstances(dbInstanceIdentifier string) ([]*rds.DBInstance, error) {
+	cli := client()
+
+	params := &rds.DescribeDBInstancesInput{
+		DBInstanceIdentifier: aws.String(dbInstanceIdentifier),
+	}
+
+	resp, err := cli.DescribeDBInstances(params)
+	if err != nil {
+		return nil, err
+	}
+
+	return resp.DBInstances, nil
+}

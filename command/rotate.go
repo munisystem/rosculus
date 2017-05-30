@@ -47,18 +47,47 @@ func (c *RotateCommand) Run(args []string) int {
 	)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
+		return 1
 	}
 	fmt.Println("Launched. Please Wait RDS Instance ready")
 
-	for {
-		if *dbInstance.DBInstanceStatus == "available" {
-			fmt.Printf("%s is ready\n", *dbInstance.DBName)
-			break
+	errCh := make(chan error, 2)
+	go func() {
+		errCh <- rds.WaitReady(*dbInstance.DBInstanceIdentifier)
+	}()
+
+	go func() {
+	loop:
+		for {
+			if len(errCh) > 0 {
+				break loop
+			}
+
+			fmt.Print(".")
+			time.Sleep(30 * time.Second)
 		}
 
-		fmt.Print(".")
-		time.Sleep(30 * time.Second)
+	}()
+
+	err = <-errCh
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return 1
 	}
+	fmt.Printf("%s is ready\n", *dbInstance.DBName)
+
+	dbInstances, err := rds.DescribeDBInstances(*dbInstance.DBInstanceIdentifier)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return 1
+	}
+
+	if len(dbInstances) == 0 {
+		fmt.Fprintln(os.Stderr, fmt.Errorf("Not mutch RDS Instances Identifier %s", *dbInstance.DBInstanceIdentifier))
+		return 1
+	}
+
+	endpoint := *dbInstances[0].Endpoint.Address
 
 	prev := deployment.Previous{
 		InstanceIdentifier: dep.Current.InstanceIdentifier,
@@ -67,7 +96,7 @@ func (c *RotateCommand) Run(args []string) int {
 
 	cur := deployment.Current{
 		InstanceIdentifier: dep.Previous.InstanceIdentifier,
-		Endpoint:           *dbInstance.Endpoint.Address,
+		Endpoint:           endpoint,
 	}
 
 	dep.Current = cur
