@@ -60,6 +60,7 @@ func (c *RotateCommand) Run(args []string) int {
 	loop:
 		for {
 			if len(errCh) > 0 {
+				fmt.Print("\n")
 				break loop
 			}
 
