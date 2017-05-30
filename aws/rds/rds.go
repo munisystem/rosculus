@@ -36,6 +36,22 @@ func CopyInstance(sourceDBInstanceIdentifier, targetDBInstanceIdentifier, dbInst
 	return resp.DBInstance, nil
 }
 
+func DeleteInstance(dbInstanceIdentifier string) (*rds.DBInstance, error) {
+	cli := client()
+
+	params := &rds.DeleteDBInstanceInput{
+		DBInstanceIdentifier: aws.String(dbInstanceIdentifier),
+		SkipFinalSnapshot:    aws.Bool(true),
+	}
+
+	resp, err := cli.DeleteDBInstance(params)
+	if err != nil {
+		return nil, err
+	}
+
+	return resp.DBInstance, nil
+}
+
 func WaitReady(dbInstanceIdentifier string) error {
 	cli := client()
 
@@ -48,6 +64,40 @@ func WaitReady(dbInstanceIdentifier string) error {
 		return err
 	}
 	return nil
+}
+
+func WaitDeleted(dbInstanceIdentifier string) error {
+	cli := client()
+
+	params := &rds.DescribeDBInstancesInput{
+		DBInstanceIdentifier: aws.String(dbInstanceIdentifier),
+	}
+
+	if err := cli.WaitUntilDBInstanceDeleted(params); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func DBInstanceAllreadyExists(dbInstanceIdentifier string) (bool, error) {
+	cli := client()
+
+	resp, err := cli.DescribeDBInstances(&rds.DescribeDBInstancesInput{})
+	if err != nil {
+		return false, err
+	}
+
+	exist := false
+	if len(resp.DBInstances) > 0 {
+		for _, v := range resp.DBInstances {
+			if dbInstanceIdentifier == *v.DBInstanceIdentifier {
+				exist = true
+				break
+			}
+		}
+	}
+	return exist, nil
 }
 
 func DescribeDBInstances(dbInstanceIdentifier string) ([]*rds.DBInstance, error) {

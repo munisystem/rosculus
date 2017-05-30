@@ -39,6 +39,37 @@ func (c *RotateCommand) Run(args []string) int {
 		return 1
 	}
 
+	exist, err := rds.DBInstanceAllreadyExists(dep.Previous.InstanceIdentifier)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+	}
+
+	if exist == true {
+		fmt.Printf("'%s' is already exists, delete before to launch new DB instance.")
+		prevDBInstances, err := rds.DescribeDBInstances(dep.Previous.InstanceIdentifier)
+		if err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			return 1
+		}
+
+		if len(prevDBInstances) != 0 {
+			if *prevDBInstances[0].DBInstanceStatus != "deleting" {
+				if _, err := rds.DeleteInstance(*prevDBInstances[0].DBInstanceIdentifier); err != nil {
+					fmt.Fprintln(os.Stderr, err)
+					return 1
+				}
+			}
+
+			if err = wait(rds.WaitDeleted, *prevDBInstances[0].DBInstanceIdentifier); err != nil {
+				fmt.Fprintln(os.Stderr, err)
+				return 1
+			}
+
+			fmt.Println()
+			fmt.Println("Deleted previous DB instance")
+		}
+	}
+
 	fmt.Printf("Launch new RDS Instance '%s' from '%s'\n", dep.Previous.InstanceIdentifier, dep.SourceDBInstanceIdentifier)
 	dbInstance, err := rds.CopyInstance(
 		dep.SourceDBInstanceIdentifier,
@@ -52,29 +83,11 @@ func (c *RotateCommand) Run(args []string) int {
 	}
 	fmt.Println("Launched. Please Wait RDS Instance ready")
 
-	errCh := make(chan error, 2)
-	go func() {
-		errCh <- rds.WaitReady(*dbInstance.DBInstanceIdentifier)
-	}()
-
-	go func() {
-	loop:
-		for {
-			if len(errCh) > 0 {
-				break loop
-			}
-
-			fmt.Print(".")
-			time.Sleep(30 * time.Second)
-		}
-
-	}()
-
-	err = <-errCh
-	if err != nil {
+	if err = wait(rds.WaitReady, *dbInstance.DBInstanceIdentifier); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		return 1
 	}
+
 	fmt.Println()
 	fmt.Printf("%s is ready\n", *dbInstance.DBInstanceIdentifier)
 
@@ -141,4 +154,30 @@ func (c *RotateCommand) Help() string {
 
 `
 	return strings.TrimSpace(helpText)
+}
+
+func wait(fn func(string) error, str string) error {
+	errCh := make(chan error, 2)
+	defer close(errCh)
+
+	go func() {
+		errCh <- fn(str)
+	}()
+
+	go func() {
+	loop:
+		for {
+			if len(errCh) > 0 {
+				break loop
+			}
+
+			fmt.Print(".")
+			time.Sleep(30 * time.Second)
+		}
+
+	}()
+
+	err := <-errCh
+
+	return err
 }
