@@ -9,6 +9,7 @@ import (
 
 	"github.com/munisystem/rstack/aws/rds"
 	"github.com/munisystem/rstack/deployment"
+	"github.com/munisystem/rstack/dnsimple"
 )
 
 type RotateCommand struct {
@@ -96,6 +97,20 @@ func (c *RotateCommand) Run(args []string) int {
 	}
 
 	endpoint := *dbInstances[0].Endpoint.Address
+
+	authToken := dep.DNSimple.AuthToken
+	accountId := dep.DNSimple.AccountID
+	domain := dep.DNSimple.Domain
+	recordId := dep.DNSimple.RecordID
+	ttl := dep.DNSimple.TTL
+
+	if authToken != "" && accountId != "" && domain != "" && recordId != 0 {
+		if err = dnsimple.UpdateRecord(authToken, accountId, domain, recordId, endpoint, ttl); err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			return 1
+		}
+	}
+	fmt.Println("Update DNS Record")
 
 	prev := deployment.Previous{
 		InstanceIdentifier: dep.Current.InstanceIdentifier,

@@ -19,6 +19,11 @@ type NewCommand struct {
 	publiclyAccessible         bool
 	dbInstanceClass            string
 	securityGroupsString       string
+	dnsimpleAuthToken          string
+	dnsimpleAccountID          string
+	dnsimpleDomain             string
+	dnsimpleRecordID           int
+	dnsimpleRecordTTL          int
 }
 
 func (c *NewCommand) Run(args []string) int {
@@ -43,6 +48,13 @@ func (c *NewCommand) Run(args []string) int {
 		PubliclyAccessible:         c.publiclyAccessible,
 		DBInstanceClass:            c.dbInstanceClass,
 		SecurityGroups:             securityGroups,
+		DNSimple: deployment.DNSimple{
+			AuthToken: c.dnsimpleAuthToken,
+			AccountID: c.dnsimpleAccountID,
+			Domain:    c.dnsimpleDomain,
+			RecordID:  c.dnsimpleRecordID,
+			TTL:       c.dnsimpleRecordTTL,
+		},
 		Current: deployment.Current{
 			InstanceIdentifier: c.dbInstanceIdentifierBase + "-blue",
 			Endpoint:           "",
@@ -68,6 +80,11 @@ func (c *NewCommand) parseArgs(args []string) error {
 	flag.BoolVar(&c.publiclyAccessible, "publicly-accessible", true, "PubliclyAccessible")
 	flag.StringVar(&c.dbInstanceClass, "db-instance-class", "db.m3.medium", "DBInstanceClass")
 	flag.StringVar(&c.securityGroupsString, "security-groups", "", "SecurityGroups")
+	flag.StringVar(&c.dnsimpleAuthToken, "dnsimple-auth-token", "", "DNSimpleAuthToken")
+	flag.StringVar(&c.dnsimpleAccountID, "dnsimple-account-id", "", "DNSimpleAccountID")
+	flag.StringVar(&c.dnsimpleDomain, "dnsimple-domain", "", "DNSimpleDomain")
+	flag.IntVar(&c.dnsimpleRecordID, "dnsimple-record-id", 0, "DNSimpleRecordID")
+	flag.IntVar(&c.dnsimpleRecordTTL, "dnsimple-record-ttl", 60, "DNSimpleRecordTTL")
 
 	if err := flag.Parse(args); err != nil {
 		return err

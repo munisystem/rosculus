@@ -10,8 +10,17 @@ type Deployment struct {
 	PubliclyAccessible         bool     `yaml:"PubliclyAccessible"`
 	DBInstanceClass            string   `yaml:"DBInstanceClass"`
 	SecurityGroups             []string `yaml:"SecurityGroups"`
+	DNSimple                   DNSimple `yaml:"DNSimple"`
 	Current                    Current  `yaml:"Current"`
 	Previous                   Previous `yaml:"Previous"`
+}
+
+type DNSimple struct {
+	AuthToken string `yaml:"AuthToken"`
+	AccountID string `yaml:"AccountID"`
+	Domain    string `yaml:"Domain"`
+	RecordID  int    `yaml:"RecordID"`
+	TTL       int    `yaml:"TTL"`
 }
 
 type Current struct {
