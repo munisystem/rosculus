@@ -65,17 +65,17 @@ func DescribeDBInstances(dbInstanceIdentifier string) ([]*rds.DBInstance, error)
 	return resp.DBInstances, nil
 }
 
-func AddSecurityGroups(dbInstanceIdentifier string, securityGroups []string) error {
+func AddSecurityGroups(dbInstanceIdentifier string, vpcSecurityGroupIds []string) error {
 	cli := client()
 
-	var awsSecurityGroups []*string
-	for _, v := range securityGroups {
-		awsSecurityGroups = append(awsSecurityGroups, aws.String(v))
+	var awsVPCSecurityGroupIds []*string
+	for _, v := range vpcSecurityGroupIds {
+		awsVPCSecurityGroupIds = append(awsVPCSecurityGroupIds, aws.String(v))
 	}
 
 	params := &rds.ModifyDBInstanceInput{
 		DBInstanceIdentifier: aws.String(dbInstanceIdentifier),
-		DBSecurityGroups:     awsSecurityGroups,
+		VpcSecurityGroupIds:  awsVPCSecurityGroupIds,
 	}
 
 	_, err := cli.ModifyDBInstance(params)

@@ -61,7 +61,6 @@ func (c *RotateCommand) Run(args []string) int {
 	loop:
 		for {
 			if len(errCh) > 0 {
-				fmt.Print("\n")
 				break loop
 			}
 
@@ -76,14 +75,15 @@ func (c *RotateCommand) Run(args []string) int {
 		fmt.Fprintln(os.Stderr, err)
 		return 1
 	}
-	fmt.Printf("%s is ready\n", *dbInstance.DBName)
+	fmt.Println()
+	fmt.Printf("%s is ready\n", *dbInstance.DBInstanceIdentifier)
 
-	if err = rds.AddSecurityGroups(*dbInstance.DBInstanceIdentifier, dep.SecurityGroups); err != nil {
+	if err = rds.AddSecurityGroups(*dbInstance.DBInstanceIdentifier, dep.VPCSecurityGroupIds); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		return 1
 	}
 
-	fmt.Println("Attached security groups %s", dep.SecurityGroups)
+	fmt.Println("Attached security groups %s", dep.VPCSecurityGroupIds)
 
 	dbInstances, err := rds.DescribeDBInstances(*dbInstance.DBInstanceIdentifier)
 	if err != nil {
@@ -109,8 +109,8 @@ func (c *RotateCommand) Run(args []string) int {
 			fmt.Fprintln(os.Stderr, err)
 			return 1
 		}
+		fmt.Println("Updated DNS Record")
 	}
-	fmt.Println("Update DNS Record")
 
 	prev := deployment.Previous{
 		InstanceIdentifier: dep.Current.InstanceIdentifier,

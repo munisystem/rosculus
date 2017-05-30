@@ -18,7 +18,7 @@ type NewCommand struct {
 	dbInstanceIdentifierBase   string
 	publiclyAccessible         bool
 	dbInstanceClass            string
-	securityGroupsString       string
+	vpcSecurityGroupIdsString  string
 	dnsimpleAuthToken          string
 	dnsimpleAccountID          string
 	dnsimpleDomain             string
@@ -39,15 +39,15 @@ func (c *NewCommand) Run(args []string) int {
 	}
 
 	var securityGroups []string
-	if c.securityGroupsString != "" {
-		securityGroups = strings.Split(c.securityGroupsString, ",")
+	if c.vpcSecurityGroupIdsString != "" {
+		securityGroups = strings.Split(c.vpcSecurityGroupIdsString, ",")
 	}
 
 	dep := &deployment.Deployment{
 		SourceDBInstanceIdentifier: c.sourceDBInstanceIdentifier,
 		PubliclyAccessible:         c.publiclyAccessible,
 		DBInstanceClass:            c.dbInstanceClass,
-		SecurityGroups:             securityGroups,
+		VPCSecurityGroupIds:        securityGroups,
 		DNSimple: deployment.DNSimple{
 			AuthToken: c.dnsimpleAuthToken,
 			AccountID: c.dnsimpleAccountID,
@@ -79,7 +79,7 @@ func (c *NewCommand) parseArgs(args []string) error {
 	flag.StringVar(&c.dbInstanceIdentifierBase, "db-instance-identifier-base", "", "DBInstanceIdentifierBase")
 	flag.BoolVar(&c.publiclyAccessible, "publicly-accessible", true, "PubliclyAccessible")
 	flag.StringVar(&c.dbInstanceClass, "db-instance-class", "db.m3.medium", "DBInstanceClass")
-	flag.StringVar(&c.securityGroupsString, "security-groups", "", "SecurityGroups")
+	flag.StringVar(&c.vpcSecurityGroupIdsString, "vpc-security-group-ids", "", "VPCSecurityGroupIds")
 	flag.StringVar(&c.dnsimpleAuthToken, "dnsimple-auth-token", "", "DNSimpleAuthToken")
 	flag.StringVar(&c.dnsimpleAccountID, "dnsimple-account-id", "", "DNSimpleAccountID")
 	flag.StringVar(&c.dnsimpleDomain, "dnsimple-domain", "", "DNSimpleDomain")
