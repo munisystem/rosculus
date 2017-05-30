@@ -9,6 +9,7 @@ type Deployment struct {
 	SourceDBInstanceIdentifier string   `yaml:"SourceDBInstanceIdentifier"`
 	PubliclyAccessible         bool     `yaml:"PubliclyAccessible"`
 	DBInstanceClass            string   `yaml:"DBInstanceClass"`
+	SecurityGroups             []string `yaml:"SecurityGroups"`
 	Current                    Current  `yaml:"Current"`
 	Previous                   Previous `yaml:"Previous"`
 }

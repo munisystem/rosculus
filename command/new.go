@@ -18,6 +18,7 @@ type NewCommand struct {
 	dbInstanceIdentifierBase   string
 	publiclyAccessible         bool
 	dbInstanceClass            string
+	securityGroupsString       string
 }
 
 func (c *NewCommand) Run(args []string) int {
@@ -32,10 +33,16 @@ func (c *NewCommand) Run(args []string) int {
 		return 1
 	}
 
+	var securityGroups []string
+	if c.securityGroupsString != "" {
+		securityGroups = strings.Split(c.securityGroupsString, ",")
+	}
+
 	dep := &deployment.Deployment{
 		SourceDBInstanceIdentifier: c.sourceDBInstanceIdentifier,
 		PubliclyAccessible:         c.publiclyAccessible,
 		DBInstanceClass:            c.dbInstanceClass,
+		SecurityGroups:             securityGroups,
 		Current: deployment.Current{
 			InstanceIdentifier: c.dbInstanceIdentifierBase + "-blue",
 			Endpoint:           "",
@@ -60,6 +67,7 @@ func (c *NewCommand) parseArgs(args []string) error {
 	flag.StringVar(&c.dbInstanceIdentifierBase, "db-instance-identifier-base", "", "DBInstanceIdentifierBase")
 	flag.BoolVar(&c.publiclyAccessible, "publicly-accessible", true, "PubliclyAccessible")
 	flag.StringVar(&c.dbInstanceClass, "db-instance-class", "db.m3.medium", "DBInstanceClass")
+	flag.StringVar(&c.securityGroupsString, "security-groups", "", "SecurityGroups")
 
 	if err := flag.Parse(args); err != nil {
 		return err

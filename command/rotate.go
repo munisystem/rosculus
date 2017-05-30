@@ -82,6 +82,11 @@ func (c *RotateCommand) Run(args []string) int {
 		return 1
 	}
 
+	if err = rds.AddSecurityGroups(*dbInstance.DBInstanceIdentifier, dep.SecurityGroups); err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return 1
+	}
+
 	if len(dbInstances) == 0 {
 		fmt.Fprintln(os.Stderr, fmt.Errorf("Not mutch RDS Instances Identifier %s", *dbInstance.DBInstanceIdentifier))
 		return 1
