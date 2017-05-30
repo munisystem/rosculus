@@ -77,13 +77,15 @@ func (c *RotateCommand) Run(args []string) int {
 	}
 	fmt.Printf("%s is ready\n", *dbInstance.DBName)
 
-	dbInstances, err := rds.DescribeDBInstances(*dbInstance.DBInstanceIdentifier)
-	if err != nil {
+	if err = rds.AddSecurityGroups(*dbInstance.DBInstanceIdentifier, dep.SecurityGroups); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		return 1
 	}
 
-	if err = rds.AddSecurityGroups(*dbInstance.DBInstanceIdentifier, dep.SecurityGroups); err != nil {
+	fmt.Println("Attached security groups %s", dep.SecurityGroups)
+
+	dbInstances, err := rds.DescribeDBInstances(*dbInstance.DBInstanceIdentifier)
+	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		return 1
 	}
