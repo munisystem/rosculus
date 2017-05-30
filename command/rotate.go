@@ -45,7 +45,7 @@ func (c *RotateCommand) Run(args []string) int {
 	}
 
 	if exist == true {
-		fmt.Printf("'%s' is already exists, delete before to launch new DB instance.")
+		fmt.Printf("'%s' is already exists, delete before to launch new DB instance\n", dep.Previous.InstanceIdentifier)
 		prevDBInstances, err := rds.DescribeDBInstances(dep.Previous.InstanceIdentifier)
 		if err != nil {
 			fmt.Fprintln(os.Stderr, err)
@@ -74,7 +74,9 @@ func (c *RotateCommand) Run(args []string) int {
 	dbInstance, err := rds.CopyInstance(
 		dep.SourceDBInstanceIdentifier,
 		dep.Previous.InstanceIdentifier,
+		dep.AvailabilityZone,
 		dep.DBInstanceClass,
+		dep.DBSubnetGroupName,
 		dep.PubliclyAccessible,
 	)
 	if err != nil {
@@ -96,7 +98,7 @@ func (c *RotateCommand) Run(args []string) int {
 		return 1
 	}
 
-	fmt.Println("Attached security groups %s", dep.VPCSecurityGroupIds)
+	fmt.Println("Attached security groups", dep.VPCSecurityGroupIds)
 
 	dbInstances, err := rds.DescribeDBInstances(*dbInstance.DBInstanceIdentifier)
 	if err != nil {
@@ -115,10 +117,11 @@ func (c *RotateCommand) Run(args []string) int {
 	accountId := dep.DNSimple.AccountID
 	domain := dep.DNSimple.Domain
 	recordId := dep.DNSimple.RecordID
+	recordName := dep.DNSimple.RecordName
 	ttl := dep.DNSimple.TTL
 
-	if authToken != "" && accountId != "" && domain != "" && recordId != 0 {
-		if err = dnsimple.UpdateRecord(authToken, accountId, domain, recordId, endpoint, ttl); err != nil {
+	if authToken != "" && accountId != "" && domain != "" && recordId != 0 && recordName != "" {
+		if err = dnsimple.UpdateRecord(authToken, accountId, domain, recordId, recordName, endpoint, ttl); err != nil {
 			fmt.Fprintln(os.Stderr, err)
 			return 1
 		}

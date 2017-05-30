@@ -15,6 +15,8 @@ type NewCommand struct {
 
 	name                       string
 	sourceDBInstanceIdentifier string
+	availabilityZone           string
+	dbSubnetGroupName          string
 	dbInstanceIdentifierBase   string
 	publiclyAccessible         bool
 	dbInstanceClass            string
@@ -23,6 +25,7 @@ type NewCommand struct {
 	dnsimpleAccountID          string
 	dnsimpleDomain             string
 	dnsimpleRecordID           int
+	dnsimpleRecordName         string
 	dnsimpleRecordTTL          int
 }
 
@@ -45,15 +48,18 @@ func (c *NewCommand) Run(args []string) int {
 
 	dep := &deployment.Deployment{
 		SourceDBInstanceIdentifier: c.sourceDBInstanceIdentifier,
+		AvailabilityZone:           c.availabilityZone,
+		DBSubnetGroupName:          c.dbSubnetGroupName,
 		PubliclyAccessible:         c.publiclyAccessible,
 		DBInstanceClass:            c.dbInstanceClass,
 		VPCSecurityGroupIds:        securityGroups,
 		DNSimple: deployment.DNSimple{
-			AuthToken: c.dnsimpleAuthToken,
-			AccountID: c.dnsimpleAccountID,
-			Domain:    c.dnsimpleDomain,
-			RecordID:  c.dnsimpleRecordID,
-			TTL:       c.dnsimpleRecordTTL,
+			AuthToken:  c.dnsimpleAuthToken,
+			AccountID:  c.dnsimpleAccountID,
+			Domain:     c.dnsimpleDomain,
+			RecordID:   c.dnsimpleRecordID,
+			RecordName: c.dnsimpleRecordName,
+			TTL:        c.dnsimpleRecordTTL,
 		},
 		Current: deployment.Current{
 			InstanceIdentifier: c.dbInstanceIdentifierBase + "-blue",
@@ -77,6 +83,8 @@ func (c *NewCommand) parseArgs(args []string) error {
 
 	flag.StringVar(&c.sourceDBInstanceIdentifier, "source-db-instance-identifier", "", "SourceDBInstanceIdentifier")
 	flag.StringVar(&c.dbInstanceIdentifierBase, "db-instance-identifier-base", "", "DBInstanceIdentifierBase")
+	flag.StringVar(&c.availabilityZone, "availability-zone", "", "AvailabilityZone")
+	flag.StringVar(&c.dbSubnetGroupName, "db-subnet-group-name", "", "DBSubnetGroupName")
 	flag.BoolVar(&c.publiclyAccessible, "publicly-accessible", true, "PubliclyAccessible")
 	flag.StringVar(&c.dbInstanceClass, "db-instance-class", "db.m3.medium", "DBInstanceClass")
 	flag.StringVar(&c.vpcSecurityGroupIdsString, "vpc-security-group-ids", "", "VPCSecurityGroupIds")
@@ -84,6 +92,7 @@ func (c *NewCommand) parseArgs(args []string) error {
 	flag.StringVar(&c.dnsimpleAccountID, "dnsimple-account-id", "", "DNSimpleAccountID")
 	flag.StringVar(&c.dnsimpleDomain, "dnsimple-domain", "", "DNSimpleDomain")
 	flag.IntVar(&c.dnsimpleRecordID, "dnsimple-record-id", 0, "DNSimpleRecordID")
+	flag.StringVar(&c.dnsimpleRecordName, "dnsimple-record-name", "", "DNSimpleRecordName")
 	flag.IntVar(&c.dnsimpleRecordTTL, "dnsimple-record-ttl", 60, "DNSimpleRecordTTL")
 
 	if err := flag.Parse(args); err != nil {
@@ -96,6 +105,14 @@ func (c *NewCommand) parseArgs(args []string) error {
 
 	if c.dbInstanceIdentifierBase == "" {
 		return errors.New("Please specify DB instance identifier base")
+	}
+
+	if c.availabilityZone == "" {
+		return errors.New("Please specify DB instance AvailabilityZone")
+	}
+
+	if c.dbSubnetGroupName == "" {
+		return errors.New("Please specify DB instance SubnetGroupName")
 	}
 
 	if 0 < flag.NArg() {

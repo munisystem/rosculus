@@ -7,6 +7,8 @@ import (
 
 type Deployment struct {
 	SourceDBInstanceIdentifier string   `yaml:"SourceDBInstanceIdentifier"`
+	AvailabilityZone           string   `yaml:"AvailabilityZone"`
+	DBSubnetGroupName          string   `yaml:"DBSubnetGroupName"`
 	PubliclyAccessible         bool     `yaml:"PubliclyAccessible"`
 	DBInstanceClass            string   `yaml:"DBInstanceClass"`
 	VPCSecurityGroupIds        []string `yaml:"VPCSecurityGroupIds"`
@@ -16,11 +18,12 @@ type Deployment struct {
 }
 
 type DNSimple struct {
-	AuthToken string `yaml:"AuthToken"`
-	AccountID string `yaml:"AccountID"`
-	Domain    string `yaml:"Domain"`
-	RecordID  int    `yaml:"RecordID"`
-	TTL       int    `yaml:"TTL"`
+	AuthToken  string `yaml:"AuthToken"`
+	AccountID  string `yaml:"AccountID"`
+	Domain     string `yaml:"Domain"`
+	RecordID   int    `yaml:"RecordID"`
+	RecordName string `yaml:"RecordName"`
+	TTL        int    `yaml:"TTL"`
 }
 
 type Current struct {
