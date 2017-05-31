@@ -7,6 +7,7 @@ import (
 
 type Deployment struct {
 	SourceDBInstanceIdentifier string   `yaml:"SourceDBInstanceIdentifier"`
+	DBMasterUserPassword       string   `yaml:"DBMasterUserPassword"`
 	AvailabilityZone           string   `yaml:"AvailabilityZone"`
 	DBSubnetGroupName          string   `yaml:"DBSubnetGroupName"`
 	PubliclyAccessible         bool     `yaml:"PubliclyAccessible"`

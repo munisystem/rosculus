@@ -18,6 +18,7 @@ type NewCommand struct {
 	availabilityZone           string
 	dbSubnetGroupName          string
 	dbInstanceIdentifierBase   string
+	dbMasterUserPassword       string
 	publiclyAccessible         bool
 	dbInstanceClass            string
 	vpcSecurityGroupIdsString  string
@@ -48,6 +49,7 @@ func (c *NewCommand) Run(args []string) int {
 
 	dep := &deployment.Deployment{
 		SourceDBInstanceIdentifier: c.sourceDBInstanceIdentifier,
+		DBMasterUserPassword:       c.dbMasterUserPassword,
 		AvailabilityZone:           c.availabilityZone,
 		DBSubnetGroupName:          c.dbSubnetGroupName,
 		PubliclyAccessible:         c.publiclyAccessible,
@@ -83,6 +85,7 @@ func (c *NewCommand) parseArgs(args []string) error {
 
 	flag.StringVar(&c.sourceDBInstanceIdentifier, "source-db-instance-identifier", "", "SourceDBInstanceIdentifier")
 	flag.StringVar(&c.dbInstanceIdentifierBase, "db-instance-identifier-base", "", "DBInstanceIdentifierBase")
+	flag.StringVar(&c.dbMasterUserPassword, "db-master-user-password", "", "DBMasterUserPassword")
 	flag.StringVar(&c.availabilityZone, "availability-zone", "", "AvailabilityZone")
 	flag.StringVar(&c.dbSubnetGroupName, "db-subnet-group-name", "", "DBSubnetGroupName")
 	flag.BoolVar(&c.publiclyAccessible, "publicly-accessible", true, "PubliclyAccessible")

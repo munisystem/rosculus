@@ -136,3 +136,18 @@ func AddSecurityGroups(dbInstanceIdentifier string, vpcSecurityGroupIds []string
 	}
 	return nil
 }
+
+func ChangeMasterPassword(dbInstanceIdentifier, password string) error {
+	cli := client()
+
+	params := &rds.ModifyDBInstanceInput{
+		DBInstanceIdentifier: aws.String(dbInstanceIdentifier),
+		MasterUserPassword:   aws.String(password),
+	}
+
+	if _, err := cli.ModifyDBInstance(params); err != nil {
+		return err
+	}
+
+	return nil
+}

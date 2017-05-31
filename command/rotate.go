@@ -100,6 +100,14 @@ func (c *RotateCommand) Run(args []string) int {
 
 	fmt.Println("Attached security groups", dep.VPCSecurityGroupIds)
 
+	if dep.DBMasterUserPassword != "" {
+		if err = rds.ChangeMasterPassword(*dbInstance.DBInstanceIdentifier, dep.DBMasterUserPassword); err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			return 1
+		}
+		fmt.Println("Changed Master User Password")
+	}
+
 	dbInstances, err := rds.DescribeDBInstances(*dbInstance.DBInstanceIdentifier)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
@@ -144,7 +152,6 @@ func (c *RotateCommand) Run(args []string) int {
 		fmt.Fprintln(os.Stderr, err)
 		return 1
 	}
-
 	return 0
 }
 
