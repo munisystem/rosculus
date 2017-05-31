@@ -35,6 +35,7 @@ func Download(bucket, key string) ([]byte, error) {
 
 	buf := new(bytes.Buffer)
 	io.Copy(buf, resp.Body)
+
 	return buf.Bytes(), nil
 }
 
@@ -50,5 +51,6 @@ func Upload(bucket, key string, body []byte) error {
 	if _, err := cli.PutObject(params); err != nil {
 		return err
 	}
+
 	return nil
 }

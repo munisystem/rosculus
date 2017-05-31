@@ -11,9 +11,9 @@ func UpdateRecord(token, accountId, domain string, recordId int, recordName, con
 		TTL:     ttl,
 	}
 
-	_, err := client.Zones.UpdateRecord(accountId, domain, recordId, *attributes)
-	if err != nil {
+	if _, err := client.Zones.UpdateRecord(accountId, domain, recordId, *attributes); err != nil {
 		return err
 	}
+
 	return nil
 }

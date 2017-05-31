@@ -61,10 +61,11 @@ func WaitReady(dbInstanceIdentifier string) error {
 		DBInstanceIdentifier: aws.String(dbInstanceIdentifier),
 	}
 
-	err := cli.WaitUntilDBInstanceAvailable(params)
-	if err != nil {
+	if err := cli.WaitUntilDBInstanceAvailable(params); err != nil {
 		return err
+
 	}
+
 	return nil
 }
 
@@ -99,6 +100,7 @@ func DBInstanceAllreadyExists(dbInstanceIdentifier string) (bool, error) {
 			}
 		}
 	}
+
 	return exist, nil
 }
 
@@ -130,10 +132,11 @@ func AddSecurityGroups(dbInstanceIdentifier string, vpcSecurityGroupIds []string
 		VpcSecurityGroupIds:  awsVPCSecurityGroupIds,
 	}
 
-	_, err := cli.ModifyDBInstance(params)
-	if err != nil {
+	if _, err := cli.ModifyDBInstance(params); err != nil {
+
 		return err
 	}
+
 	return nil
 }
 
