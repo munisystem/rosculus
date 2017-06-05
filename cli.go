@@ -5,7 +5,7 @@ import (
 	"os"
 
 	"github.com/mitchellh/cli"
-	"github.com/munisystem/rstack/command"
+	"github.com/munisystem/rosculus/command"
 )
 
 func Run(args []string) int {

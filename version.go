@@ -1,6 +1,6 @@
 package main
 
-const Name string = "rstack"
+const Name string = "rosculus"
 
 // GitCommit describes latest commit hash.
 // This value is extracted by git command when building.

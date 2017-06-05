@@ -6,9 +6,9 @@ import (
 	"os"
 	"strings"
 
-	"github.com/munisystem/rstack/aws/rds"
-	"github.com/munisystem/rstack/deployment"
-	"github.com/munisystem/rstack/dnsimple"
+	"github.com/munisystem/rosculus/aws/rds"
+	"github.com/munisystem/rosculus/deployment"
+	"github.com/munisystem/rosculus/dnsimple"
 )
 
 type RollbackCommand struct {

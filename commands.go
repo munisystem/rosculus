@@ -2,7 +2,7 @@ package main
 
 import (
 	"github.com/mitchellh/cli"
-	"github.com/munisystem/rstack/command"
+	"github.com/munisystem/rosculus/command"
 )
 
 func Commands(meta *command.Meta) map[string]cli.CommandFactory {

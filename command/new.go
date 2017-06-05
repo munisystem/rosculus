@@ -7,7 +7,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/munisystem/rstack/deployment"
+	"github.com/munisystem/rosculus/deployment"
 )
 
 type NewCommand struct {
@@ -81,7 +81,7 @@ func (c *NewCommand) Run(args []string) int {
 }
 
 func (c *NewCommand) parseArgs(args []string) error {
-	flag := flag.NewFlagSet("rstack", flag.ContinueOnError)
+	flag := flag.NewFlagSet("rosculus", flag.ContinueOnError)
 
 	flag.StringVar(&c.sourceDBInstanceIdentifier, "source-db-instance-identifier", "", "SourceDBInstanceIdentifier")
 	flag.StringVar(&c.dbInstanceIdentifierBase, "db-instance-identifier-base", "", "DBInstanceIdentifierBase")

@@ -6,7 +6,7 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/s3"
-	awspkg "github.com/munisystem/rstack/aws"
+	awspkg "github.com/munisystem/rosculus/aws"
 )
 
 var (

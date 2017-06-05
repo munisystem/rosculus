@@ -1,7 +1,7 @@
 package deployment
 
 import (
-	"github.com/munisystem/rstack/aws/s3"
+	"github.com/munisystem/rosculus/aws/s3"
 	yaml "gopkg.in/yaml.v2"
 )
 

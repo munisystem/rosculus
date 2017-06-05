@@ -1,4 +1,4 @@
-NAME     := rstack
+NAME     := rosculus
 VERSION  := v0.0.1
 REVISION := $(shell git rev-parse --short HEAD)
 
