@@ -42,6 +42,7 @@ func (c *RotateCommand) Run(args []string) int {
 	exist, err := rds.DBInstanceAllreadyExists(dep.Previous.InstanceIdentifier)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
+		return 1
 	}
 
 	if exist == true {
