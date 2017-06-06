@@ -4,7 +4,11 @@ COPY . .
 RUN make update-deps && make
 
 FROM alpine:latest
-RUN mkdir /lib64 && ln -s /lib/libc.musl-x86_64.so.1 /lib64/ld-linux-x86-64.so.2
+RUN mkdir /lib64 \
+    && ln -s /lib/libc.musl-x86_64.so.1 /lib64/ld-linux-x86-64.so.2 \
+    && apk --update add ca-certificates \
+    && rm -rf /var/cache/apk/*
+
 WORKDIR /app/
 COPY --from=build-env /go/src/app/bin/rosculus /app/
 ENTRYPOINT ["./rosculus"]
