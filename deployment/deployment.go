@@ -6,16 +6,17 @@ import (
 )
 
 type Deployment struct {
-	SourceDBInstanceIdentifier string   `yaml:"SourceDBInstanceIdentifier"`
-	DBMasterUserPassword       string   `yaml:"DBMasterUserPassword"`
-	AvailabilityZone           string   `yaml:"AvailabilityZone"`
-	DBSubnetGroupName          string   `yaml:"DBSubnetGroupName"`
-	PubliclyAccessible         bool     `yaml:"PubliclyAccessible"`
-	DBInstanceClass            string   `yaml:"DBInstanceClass"`
-	VPCSecurityGroupIds        []string `yaml:"VPCSecurityGroupIds"`
-	DNSimple                   DNSimple `yaml:"DNSimple"`
-	Current                    Current  `yaml:"Current"`
-	Previous                   Previous `yaml:"Previous"`
+	SourceDBInstanceIdentifier string            `yaml:"SourceDBInstanceIdentifier"`
+	DBMasterUserPassword       string            `yaml:"DBMasterUserPassword"`
+	DBInstanceTags             map[string]string `yaml:"DBInstanceTags"`
+	AvailabilityZone           string            `yaml:"AvailabilityZone"`
+	DBSubnetGroupName          string            `yaml:"DBSubnetGroupName"`
+	PubliclyAccessible         bool              `yaml:"PubliclyAccessible"`
+	DBInstanceClass            string            `yaml:"DBInstanceClass"`
+	VPCSecurityGroupIds        []string          `yaml:"VPCSecurityGroupIds"`
+	DNSimple                   DNSimple          `yaml:"DNSimple"`
+	Current                    Current           `yaml:"Current"`
+	Previous                   Previous          `yaml:"Previous"`
 }
 
 type DNSimple struct {

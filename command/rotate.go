@@ -79,6 +79,7 @@ func (c *RotateCommand) Run(args []string) int {
 		dep.DBInstanceClass,
 		dep.DBSubnetGroupName,
 		dep.PubliclyAccessible,
+		dep.DBInstanceTags,
 	)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)

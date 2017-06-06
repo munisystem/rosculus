@@ -18,6 +18,7 @@ type NewCommand struct {
 	availabilityZone           string
 	dbSubnetGroupName          string
 	dbInstanceIdentifierBase   string
+	dbInstanceTags             string
 	dbMasterUserPassword       string
 	publiclyAccessible         bool
 	dbInstanceClass            string
@@ -47,9 +48,23 @@ func (c *NewCommand) Run(args []string) int {
 		securityGroups = strings.Split(c.vpcSecurityGroupIdsString, ",")
 	}
 
+	instanceTags := make(map[string]string)
+	if c.dbInstanceTags != "" {
+		keyValues := strings.Split(c.dbInstanceTags, ",")
+		for _, keyValue := range keyValues {
+			arr := strings.Split(keyValue, "=")
+			if len(arr) != 2 {
+				fmt.Fprintln(os.Stderr, errors.New("-db-instance-tags is illegal format, please set like 'key1=value1,key2=value2'"))
+				return 1
+			}
+			instanceTags[arr[0]] = arr[1]
+		}
+	}
+
 	dep := &deployment.Deployment{
 		SourceDBInstanceIdentifier: c.sourceDBInstanceIdentifier,
 		DBMasterUserPassword:       c.dbMasterUserPassword,
+		DBInstanceTags:             instanceTags,
 		AvailabilityZone:           c.availabilityZone,
 		DBSubnetGroupName:          c.dbSubnetGroupName,
 		PubliclyAccessible:         c.publiclyAccessible,
@@ -86,6 +101,7 @@ func (c *NewCommand) parseArgs(args []string) error {
 	flag.StringVar(&c.sourceDBInstanceIdentifier, "source-db-instance-identifier", "", "SourceDBInstanceIdentifier")
 	flag.StringVar(&c.dbInstanceIdentifierBase, "db-instance-identifier-base", "", "DBInstanceIdentifierBase")
 	flag.StringVar(&c.dbMasterUserPassword, "db-master-user-password", "", "DBMasterUserPassword")
+	flag.StringVar(&c.dbInstanceTags, "db-instance-tags", "", "DBInstanceTags")
 	flag.StringVar(&c.availabilityZone, "availability-zone", "", "AvailabilityZone")
 	flag.StringVar(&c.dbSubnetGroupName, "db-subnet-group-name", "", "DBSubnetGroupName")
 	flag.BoolVar(&c.publiclyAccessible, "publicly-accessible", true, "PubliclyAccessible")

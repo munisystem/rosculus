@@ -17,8 +17,15 @@ func client() *rds.RDS {
 	return rdscli
 }
 
-func CopyInstance(sourceDBInstanceIdentifier, targetDBInstanceIdentifier, availabilityZone, dbInstanceClass, dbSubnetGroupName string, publiclyAccessible bool) (*rds.DBInstance, error) {
+func CopyInstance(sourceDBInstanceIdentifier, targetDBInstanceIdentifier, availabilityZone, dbInstanceClass, dbSubnetGroupName string, publiclyAccessible bool, instanceTags map[string]string) (*rds.DBInstance, error) {
 	cli := client()
+
+	var tags []*rds.Tag
+	if len(instanceTags) > 0 {
+		for key, value := range instanceTags {
+			tags = append(tags, &rds.Tag{Key: aws.String(key), Value: aws.String(value)})
+		}
+	}
 
 	params := &rds.RestoreDBInstanceToPointInTimeInput{
 		SourceDBInstanceIdentifier: aws.String(sourceDBInstanceIdentifier),
@@ -28,6 +35,7 @@ func CopyInstance(sourceDBInstanceIdentifier, targetDBInstanceIdentifier, availa
 		DBInstanceClass:            aws.String(dbInstanceClass),
 		DBSubnetGroupName:          aws.String(dbSubnetGroupName),
 		UseLatestRestorableTime:    aws.Bool(true),
+		Tags: tags,
 	}
 
 	resp, err := cli.RestoreDBInstanceToPointInTime(params)
