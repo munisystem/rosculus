@@ -17,7 +17,7 @@ type Deployment struct {
 	DNSimple                   DNSimple          `yaml:"DNSimple"`
 	Current                    Current           `yaml:"Current"`
 	Previous                   Previous          `yaml:"Previous"`
-	Rollback                   bool              `yarm:"Rollback"`
+	Rollback                   bool              `yaml:"Rollback"`
 }
 
 type DNSimple struct {
