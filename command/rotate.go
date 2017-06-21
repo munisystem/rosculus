@@ -39,15 +39,22 @@ func (c *RotateCommand) Run(args []string) int {
 		return 1
 	}
 
-	exist, err := rds.DBInstanceAllreadyExists(dep.Previous.InstanceIdentifier)
+	var identifier string
+	if dep.Rollback {
+		identifier = dep.Previous.InstanceIdentifier
+	} else {
+		identifier = dep.Current.InstanceIdentifier
+	}
+
+	exist, err := rds.DBInstanceAllreadyExists(identifier)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		return 1
 	}
 
 	if exist == true {
-		fmt.Printf("'%s' is already exists, delete before to launch new DB instance\n", dep.Previous.InstanceIdentifier)
-		prevDBInstances, err := rds.DescribeDBInstances(dep.Previous.InstanceIdentifier)
+		fmt.Printf("'%s' is already exists, delete before to launch new DB instance\n", identifier)
+		prevDBInstances, err := rds.DescribeDBInstances(identifier)
 		if err != nil {
 			fmt.Fprintln(os.Stderr, err)
 			return 1
@@ -67,14 +74,14 @@ func (c *RotateCommand) Run(args []string) int {
 			}
 
 			fmt.Println()
-			fmt.Println("Deleted previous DB instance")
+			fmt.Println("Deleted DB instance")
 		}
 	}
 
-	fmt.Printf("Launch new RDS Instance '%s' from '%s'\n", dep.Previous.InstanceIdentifier, dep.SourceDBInstanceIdentifier)
+	fmt.Printf("Launch new RDS Instance '%s' from '%s'\n", identifier, dep.SourceDBInstanceIdentifier)
 	dbInstance, err := rds.CopyInstance(
 		dep.SourceDBInstanceIdentifier,
-		dep.Previous.InstanceIdentifier,
+		identifier,
 		dep.AvailabilityZone,
 		dep.DBInstanceClass,
 		dep.DBSubnetGroupName,
@@ -138,14 +145,30 @@ func (c *RotateCommand) Run(args []string) int {
 		fmt.Println("Updated DNS Record")
 	}
 
+	var curInstanceIdentifier string
+	var curEndpoint string
+	var prevInstanceIdentifier string
+	var prevEndpoint string
+	if dep.Rollback {
+		prevInstanceIdentifier = dep.Current.InstanceIdentifier
+		prevEndpoint = dep.Current.Endpoint
+		curInstanceIdentifier = dep.Previous.InstanceIdentifier
+		curEndpoint = endpoint
+	} else {
+		prevInstanceIdentifier = ""
+		prevEndpoint = ""
+		curInstanceIdentifier = dep.Current.InstanceIdentifier
+		curEndpoint = endpoint
+	}
+
 	prev := deployment.Previous{
-		InstanceIdentifier: dep.Current.InstanceIdentifier,
-		Endpoint:           dep.Current.Endpoint,
+		InstanceIdentifier: prevInstanceIdentifier,
+		Endpoint:           prevEndpoint,
 	}
 
 	cur := deployment.Current{
-		InstanceIdentifier: dep.Previous.InstanceIdentifier,
-		Endpoint:           endpoint,
+		InstanceIdentifier: curInstanceIdentifier,
+		Endpoint:           curEndpoint,
 	}
 
 	dep.Current = cur

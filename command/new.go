@@ -29,6 +29,7 @@ type NewCommand struct {
 	dnsimpleRecordID           int
 	dnsimpleRecordName         string
 	dnsimpleRecordTTL          int
+	rollback                   bool
 }
 
 func (c *NewCommand) Run(args []string) int {
@@ -86,6 +87,7 @@ func (c *NewCommand) Run(args []string) int {
 			InstanceIdentifier: c.dbInstanceIdentifierBase + "-green",
 			Endpoint:           "",
 		},
+		Rollback: c.rollback,
 	}
 
 	if err := dep.Put(bucket, c.name); err != nil {
@@ -113,6 +115,7 @@ func (c *NewCommand) parseArgs(args []string) error {
 	flag.IntVar(&c.dnsimpleRecordID, "dnsimple-record-id", 0, "DNSimpleRecordID")
 	flag.StringVar(&c.dnsimpleRecordName, "dnsimple-record-name", "", "DNSimpleRecordName")
 	flag.IntVar(&c.dnsimpleRecordTTL, "dnsimple-record-ttl", 60, "DNSimpleRecordTTL")
+	flag.BoolVar(&c.publiclyAccessible, "rollback", true, "Rollback")
 
 	if err := flag.Parse(args); err != nil {
 		return err
