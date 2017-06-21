@@ -38,6 +38,11 @@ func (c *RollbackCommand) Run(args []string) int {
 		return 1
 	}
 
+	if !dep.Rollback {
+		fmt.Println("This deployment don't allow rollback")
+		return 1
+	}
+
 	exists, err := rds.DBInstanceAllreadyExists(dep.Previous.InstanceIdentifier)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
