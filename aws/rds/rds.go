@@ -2,6 +2,8 @@ package rds
 
 import (
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/awserr"
+	"github.com/aws/aws-sdk-go/aws/request"
 	"github.com/aws/aws-sdk-go/service/rds"
 	awspkg "github.com/munisystem/rosculus/aws"
 )
@@ -69,12 +71,27 @@ func WaitReady(dbInstanceIdentifier string) error {
 		DBInstanceIdentifier: aws.String(dbInstanceIdentifier),
 	}
 
-	if err := cli.WaitUntilDBInstanceAvailable(params); err != nil {
-		return err
-
+	var err error
+	for {
+		err = cli.WaitUntilDBInstanceAvailable(params)
+		if !checkWaiterNotReady(err) {
+			break
+		}
 	}
 
-	return nil
+	return err
+}
+
+func checkWaiterNotReady(err error) bool {
+	if err != nil {
+		aerr, ok := err.(awserr.Error)
+		if ok && aerr.Code() == request.WaiterResourceNotReadyErrorCode {
+			return true
+		}
+		return false
+	}
+
+	return false
 }
 
 func WaitDeleted(dbInstanceIdentifier string) error {
