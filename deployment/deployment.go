@@ -18,6 +18,7 @@ type Deployment struct {
 	Current                    Current           `yaml:"Current"`
 	Previous                   Previous          `yaml:"Previous"`
 	Rollback                   bool              `yaml:"Rollback"`
+	Queries                    []string          `yaml:"Queries"`
 }
 
 type DNSimple struct {

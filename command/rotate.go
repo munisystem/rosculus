@@ -10,6 +10,7 @@ import (
 	"github.com/munisystem/rosculus/aws/rds"
 	"github.com/munisystem/rosculus/deployment"
 	"github.com/munisystem/rosculus/dnsimple"
+	"github.com/munisystem/rosculus/lib/postgres"
 )
 
 type RotateCommand struct {
@@ -129,6 +130,19 @@ func (c *RotateCommand) Run(args []string) int {
 	}
 
 	endpoint := *dbInstances[0].Endpoint.Address
+	port := *dbInstances[0].Endpoint.Port
+	user := *dbInstances[0].MasterUsername
+	database := *dbInstances[0].DBName
+
+	if len(dep.Queries) != 0 {
+		connectionString := fmt.Sprintf("postgres://%s:%s@%s:%d/%s", user, dep.DBMasterUserPassword, endpoint, port, database)
+		p := postgres.Initialize(connectionString)
+
+		if err := p.RunQueries(dep.Queries); err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			return 1
+		}
+	}
 
 	authToken := dep.DNSimple.AuthToken
 	accountId := dep.DNSimple.AccountID
