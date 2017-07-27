@@ -11,7 +11,7 @@ DIST_DIRS := find * -type d -exec
 .DEFAULT_GOAL := bin/$(NAME)
 
 bin/$(NAME): $(SRCS)
-	go build $(OPTIONS) $(LDFLAGS) -o bin/$(NAME)
+	CGO_ENABLED=0 go build $(OPTIONS) $(LDFLAGS) -o bin/$(NAME)
 
 .PHONY: clean
 clean:
