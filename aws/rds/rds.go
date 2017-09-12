@@ -108,7 +108,7 @@ func WaitDeleted(dbInstanceIdentifier string) error {
 	return nil
 }
 
-func DBInstanceAllreadyExists(dbInstanceIdentifier string) (bool, error) {
+func DBInstanceAlreadyExists(dbInstanceIdentifier string) (bool, error) {
 	cli := client()
 
 	resp, err := cli.DescribeDBInstances(&rds.DescribeDBInstancesInput{})
