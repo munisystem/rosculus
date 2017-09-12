@@ -43,7 +43,7 @@ func (c *RollbackCommand) Run(args []string) int {
 		return 1
 	}
 
-	exists, err := rds.DBInstanceAllreadyExists(dep.Previous.InstanceIdentifier)
+	exists, err := rds.DBInstanceAlreadyExists(dep.Previous.InstanceIdentifier)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		return 1
