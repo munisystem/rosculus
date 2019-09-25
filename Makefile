@@ -36,4 +36,4 @@ test:
 
 .PHONY: update-deps
 update-deps: dep
-	dep ensure
+	dep ensure -v

@@ -61,6 +61,9 @@ func (c *RotateCommand) Run(args []string) int {
 		loc = time.FixedZone("Asia/Tokyo", 9*60*60)
 	}
 	newInstanceIdentifier := baseIdentifier + "-" + time.Now().In(loc).Format("20060102")
+	if previousInstanceIdentifier == newInstanceIdentifier {
+		previousInstanceIdentifier = ""
+	}
 
 	exist, err := rds.DBInstanceAlreadyExists(newInstanceIdentifier)
 	if err != nil {
