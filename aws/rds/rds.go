@@ -1,6 +1,8 @@
 package rds
 
 import (
+	"strings"
+
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/request"
@@ -37,7 +39,7 @@ func CopyInstance(sourceDBInstanceIdentifier, targetDBInstanceIdentifier, availa
 		DBInstanceClass:            aws.String(dbInstanceClass),
 		DBSubnetGroupName:          aws.String(dbSubnetGroupName),
 		UseLatestRestorableTime:    aws.Bool(true),
-		Tags: tags,
+		Tags:                       tags,
 	}
 
 	resp, err := cli.RestoreDBInstanceToPointInTime(params)
@@ -62,6 +64,19 @@ func DeleteInstance(dbInstanceIdentifier string) (*rds.DBInstance, error) {
 	}
 
 	return resp.DBInstance, nil
+}
+
+func GetInstanceTags(resourceName string) ([]*rds.Tag, error) {
+	cli := client()
+
+	patams := &rds.ListTagsForResourceInput{
+		ResourceName: aws.String(resourceName),
+	}
+	resp, err := cli.ListTagsForResource(patams)
+	if err != nil {
+		return nil, err
+	}
+	return resp.TagList, nil
 }
 
 func WaitReady(dbInstanceIdentifier string) error {
@@ -127,6 +142,32 @@ func DBInstanceAlreadyExists(dbInstanceIdentifier string) (bool, error) {
 	}
 
 	return exist, nil
+}
+
+func GetDBInstancesFilteredIdentifier(dbInstanceIdentifier string) ([]*rds.DBInstance, error) {
+	instances, err := getAllDBInstances()
+	if err != nil {
+		return nil, err
+	}
+
+	var filteredInstances []*rds.DBInstance
+	for _, instance := range instances {
+		if strings.Contains(*instance.DBInstanceIdentifier, dbInstanceIdentifier) {
+			filteredInstances = append(filteredInstances, instance)
+		}
+	}
+	return filteredInstances, nil
+}
+
+func getAllDBInstances() ([]*rds.DBInstance, error) {
+	cli := client()
+
+	resp, err := cli.DescribeDBInstances(&rds.DescribeDBInstancesInput{})
+	if err != nil {
+		return nil, err
+	}
+
+	return resp.DBInstances, nil
 }
 
 func DescribeDBInstances(dbInstanceIdentifier string) ([]*rds.DBInstance, error) {
