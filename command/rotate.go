@@ -40,22 +40,31 @@ func (c *RotateCommand) Run(args []string) int {
 		return 1
 	}
 
-	var identifier string
-	if dep.Rollback {
-		identifier = dep.Previous.InstanceIdentifier
-	} else {
-		identifier = dep.Current.InstanceIdentifier
+	// FIXME: Will remove information about current instance identifier
+	baseIdentifier := dep.Current.InstanceIdentifier
+
+	var oldInstanceIdentifier, newInstanceIdentifier string
+	loc, err := time.LoadLocation("Asia/Tokyo")
+	if err != nil {
+		loc = time.FixedZone("Asia/Tokyo", 9*60*60)
+	}
+	today := time.Now().In(loc)
+	yesterday := today.AddDate(0, 0, -1)
+	newInstanceIdentifier = baseIdentifier + "-" + today.Format("20060102")
+	oldInstanceIdentifier = baseIdentifier + "-" + yesterday.Format("20060102")
+	if oldInstanceIdentifier == newInstanceIdentifier {
+		oldInstanceIdentifier = ""
 	}
 
-	exist, err := rds.DBInstanceAlreadyExists(identifier)
+	exist, err := rds.DBInstanceAlreadyExists(newInstanceIdentifier)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		return 1
 	}
 
 	if exist == true {
-		fmt.Printf("'%s' is already exists, delete before to launch new DB instance\n", identifier)
-		prevDBInstances, err := rds.DescribeDBInstances(identifier)
+		fmt.Printf("'%s' is already exists, delete before to launch new DB instance\n", newInstanceIdentifier)
+		prevDBInstances, err := rds.DescribeDBInstances(newInstanceIdentifier)
 		if err != nil {
 			fmt.Fprintln(os.Stderr, err)
 			return 1
@@ -79,10 +88,10 @@ func (c *RotateCommand) Run(args []string) int {
 		}
 	}
 
-	fmt.Printf("Launch new RDS Instance '%s' from '%s'\n", identifier, dep.SourceDBInstanceIdentifier)
+	fmt.Printf("Launch new RDS Instance '%s' from '%s'\n", newInstanceIdentifier, dep.SourceDBInstanceIdentifier)
 	dbInstance, err := rds.CopyInstance(
 		dep.SourceDBInstanceIdentifier,
-		identifier,
+		newInstanceIdentifier,
 		dep.AvailabilityZone,
 		dep.DBInstanceClass,
 		dep.DBSubnetGroupName,
@@ -100,7 +109,6 @@ func (c *RotateCommand) Run(args []string) int {
 		return 1
 	}
 
-	fmt.Println()
 	fmt.Printf("%s is ready\n", *dbInstance.DBInstanceIdentifier)
 
 	if err = rds.AddSecurityGroups(*dbInstance.DBInstanceIdentifier, dep.VPCSecurityGroupIds); err != nil {
@@ -159,37 +167,36 @@ func (c *RotateCommand) Run(args []string) int {
 		fmt.Println("Updated DNS Record")
 	}
 
-	var curInstanceIdentifier string
-	var curEndpoint string
-	var prevInstanceIdentifier string
-	var prevEndpoint string
-	if dep.Rollback {
-		prevInstanceIdentifier = dep.Current.InstanceIdentifier
-		prevEndpoint = dep.Current.Endpoint
-		curInstanceIdentifier = dep.Previous.InstanceIdentifier
-		curEndpoint = endpoint
-	} else {
-		prevInstanceIdentifier = ""
-		prevEndpoint = ""
-		curInstanceIdentifier = dep.Current.InstanceIdentifier
-		curEndpoint = endpoint
-	}
+	if oldInstanceIdentifier != "" {
+		fmt.Printf("delete previous DB Instance '%s'\n", oldInstanceIdentifier)
+		prevDBInstances, err := rds.DescribeDBInstances(oldInstanceIdentifier)
+		if err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			return 1
+		}
 
-	prev := deployment.Previous{
-		InstanceIdentifier: prevInstanceIdentifier,
-		Endpoint:           prevEndpoint,
-	}
-
-	cur := deployment.Current{
-		InstanceIdentifier: curInstanceIdentifier,
-		Endpoint:           curEndpoint,
-	}
-
-	dep.Current = cur
-	dep.Previous = prev
-	if err = dep.Put(bucket, name); err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		return 1
+		if len(prevDBInstances) != 0 {
+			if *prevDBInstances[0].DBInstanceStatus != "deleting" {
+				tags, err := rds.GetInstanceTags(*prevDBInstances[0].DBInstanceArn)
+				if err != nil {
+					fmt.Printf("failed to get previous DB Instances tags, skip deleting '%s'\n", err)
+					return 0
+				}
+				for _, tag := range tags {
+					if *tag.Key != "env" {
+						continue
+					}
+					if *tag.Value == "production" {
+						fmt.Printf("'%s' is for production environment, skip deleting\n", oldInstanceIdentifier)
+						return 0
+					}
+				}
+				if _, err := rds.DeleteInstance(*prevDBInstances[0].DBInstanceIdentifier); err != nil {
+					fmt.Fprintln(os.Stderr, err)
+					return 1
+				}
+			}
+		}
 	}
 	return 0
 }
