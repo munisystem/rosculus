@@ -43,26 +43,17 @@ func (c *RotateCommand) Run(args []string) int {
 	// FIXME: Will remove information about current instance identifier
 	baseIdentifier := dep.Current.InstanceIdentifier
 
-	// MEMO: list up candidates for previous db instance
-	var previousInstanceIdentifier string
-	candidates, err := rds.GetDBInstancesFilteredIdentifier(baseIdentifier)
-	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		return 1
-	}
-	if len(candidates) == 0 || len(candidates) > 1 {
-		previousInstanceIdentifier = ""
-	} else if len(candidates) == 1 {
-		previousInstanceIdentifier = *candidates[0].DBInstanceIdentifier
-	}
-
+	var oldInstanceIdentifier, newInstanceIdentifier string
 	loc, err := time.LoadLocation("Asia/Tokyo")
 	if err != nil {
 		loc = time.FixedZone("Asia/Tokyo", 9*60*60)
 	}
-	newInstanceIdentifier := baseIdentifier + "-" + time.Now().In(loc).Format("20060102")
-	if previousInstanceIdentifier == newInstanceIdentifier {
-		previousInstanceIdentifier = ""
+	today := time.Now().In(loc)
+	yesterday := today.AddDate(0, 0, -1)
+	newInstanceIdentifier = baseIdentifier + "-" + today.Format("20060102")
+	oldInstanceIdentifier = baseIdentifier + "-" + yesterday.Format("20060102")
+	if oldInstanceIdentifier == newInstanceIdentifier {
+		oldInstanceIdentifier = ""
 	}
 
 	exist, err := rds.DBInstanceAlreadyExists(newInstanceIdentifier)
@@ -176,9 +167,9 @@ func (c *RotateCommand) Run(args []string) int {
 		fmt.Println("Updated DNS Record")
 	}
 
-	if previousInstanceIdentifier != "" {
-		fmt.Printf("delete previous DB Instance '%s'\n", previousInstanceIdentifier)
-		prevDBInstances, err := rds.DescribeDBInstances(previousInstanceIdentifier)
+	if oldInstanceIdentifier != "" {
+		fmt.Printf("delete previous DB Instance '%s'\n", oldInstanceIdentifier)
+		prevDBInstances, err := rds.DescribeDBInstances(oldInstanceIdentifier)
 		if err != nil {
 			fmt.Fprintln(os.Stderr, err)
 			return 1
@@ -196,7 +187,7 @@ func (c *RotateCommand) Run(args []string) int {
 						continue
 					}
 					if *tag.Value == "production" {
-						fmt.Printf("'%s' is for production environment, skip deleting\n", previousInstanceIdentifier)
+						fmt.Printf("'%s' is for production environment, skip deleting\n", oldInstanceIdentifier)
 						return 0
 					}
 				}
