@@ -1,7 +1,7 @@
 FROM golang:1.8 AS build-env
 WORKDIR /go/src/app
 COPY . .
-RUN make update-deps && make
+RUN make
 
 FROM alpine:latest
 RUN apk --update add ca-certificates \
