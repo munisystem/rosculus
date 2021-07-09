@@ -1,4 +1,4 @@
-FROM golang:1.8 AS build-env
+FROM golang:1.16 AS build-env
 WORKDIR /go/src/app
 COPY . .
 RUN make
