@@ -7,7 +7,9 @@ import (
 
 type Config struct {
 	SourceDBInstanceIdentifier string            `yaml:"SourceDBInstanceIdentifier"`
-	DBInstanceIdentifierBase   string            `yaml:"DBInstanceIdentifierBase"`
+	DBInstanceIdentifier       string            `yaml:"DBInstanceIdentifier"`
+	SourceDBClusterIdentifier  string            `yaml:"SourceDBClusterIdentifier"`
+	DBClusterIdentifier        string            `yaml:"DBClusterIdentifier"`
 	DBMasterUserPassword       string            `yaml:"DBMasterUserPassword"`
 	DBInstanceTags             map[string]string `yaml:"DBInstanceTags"`
 	AvailabilityZone           string            `yaml:"AvailabilityZone"`

@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/munisystem/rosculus/config"
+	"github.com/munisystem/rosculus/database"
 	"github.com/munisystem/rosculus/database/rds"
 	"github.com/munisystem/rosculus/dns/dnsimple"
 	"github.com/munisystem/rosculus/lib/postgres"
@@ -36,23 +37,51 @@ func (c *RotateCommand) Run(args []string) int {
 		log.Fatalf("failed to load config file from S3: %s\n", err)
 	}
 
+	var (
+		dbIdentifier     string
+		prevDBIdentifier string
+		instance         *database.DBInstance
+	)
 	now := time.Now()
-	dbInstanceIdentifier := fmt.Sprintf("%s-%s", config.DBInstanceIdentifierBase, now.Format("20060102"))
-	prevDBInstanceIdentifier := fmt.Sprintf("%s-%s", config.DBInstanceIdentifierBase, now.Add(-24*time.Hour).Format("20060102"))
 
-	dbInstanceConfig := &rds.DBInstanceConfig{
-		SourceDBInstanceIdentifier: config.SourceDBInstanceIdentifier,
-		TargetDBInstanceIdentifier: dbInstanceIdentifier,
-		AvailabilityZone:           config.AvailabilityZone,
-		PubliclyAccessible:         config.PubliclyAccessible,
-		DBInstanceClass:            config.DBInstanceClass,
-		DBSubnetGroupName:          config.DBSubnetGroupName,
-		VpcSecurityGroupIds:        config.VPCSecurityGroupIds,
-		Tags:                       config.DBInstanceTags,
-		MasterUserPassword:         config.DBMasterUserPassword,
+	if config.SourceDBInstanceIdentifier != "" && config.DBInstanceIdentifier != "" {
+		dbIdentifier = fmt.Sprintf("%s-%s", config.DBInstanceIdentifier, now.Format("20060102"))
+		prevDBIdentifier = fmt.Sprintf("%s-%s", config.DBInstanceIdentifier, now.Add(-24*time.Hour).Format("20060102"))
+
+		dbInstanceConfig := &rds.DBInstanceConfig{
+			SourceDBInstanceIdentifier: config.SourceDBInstanceIdentifier,
+			TargetDBInstanceIdentifier: dbIdentifier,
+			AvailabilityZone:           config.AvailabilityZone,
+			PubliclyAccessible:         config.PubliclyAccessible,
+			DBInstanceClass:            config.DBInstanceClass,
+			DBSubnetGroupName:          config.DBSubnetGroupName,
+			VpcSecurityGroupIds:        config.VPCSecurityGroupIds,
+			Tags:                       config.DBInstanceTags,
+			MasterUserPassword:         config.DBMasterUserPassword,
+		}
+
+		instance, err = rds.CloneDBInstance(dbInstanceConfig)
+	} else if config.SourceDBClusterIdentifier != "" && config.DBClusterIdentifier != "" {
+		dbIdentifier = fmt.Sprintf("%s-%s", config.DBClusterIdentifier, now.Format("20060102"))
+		prevDBIdentifier = fmt.Sprintf("%s-%s", config.DBClusterIdentifier, now.Add(-24*time.Hour).Format("20060102"))
+
+		dbClusterConfig := &rds.DBClusterConfig{
+			SourceDBClusterIdentifier: config.SourceDBClusterIdentifier,
+			DBClusterIdentifier:       dbIdentifier,
+			AvailabilityZone:          config.AvailabilityZone,
+			PubliclyAccessible:        config.PubliclyAccessible,
+			DBInstanceClass:           config.DBInstanceClass,
+			DBSubnetGroupName:         config.DBSubnetGroupName,
+			VpcSecurityGroupIds:       config.VPCSecurityGroupIds,
+			Tags:                      config.DBInstanceTags,
+			MasterUserPassword:        config.DBMasterUserPassword,
+		}
+
+		instance, err = rds.CloneDBCluster(dbClusterConfig)
+	} else {
+		log.Fatalf("config %s is invalid\n", name)
 	}
 
-	instance, err := rds.CloneDBInstance(dbInstanceConfig)
 	if err != nil {
 		log.Fatalf("failed to create Database: %s\n", err)
 	}
@@ -87,8 +116,14 @@ func (c *RotateCommand) Run(args []string) int {
 	}
 	log.Printf("updated DNS record %s.%s\n", recordName, domain)
 
-	if err := rds.DeleteDBInstance(prevDBInstanceIdentifier); err != nil {
-		log.Fatalf("failed to delete the previous DB Instance %s: %s\n", prevDBInstanceIdentifier, err)
+	if config.SourceDBInstanceIdentifier != "" && config.DBInstanceIdentifier != "" {
+		if err := rds.DeleteDBInstance(prevDBIdentifier); err != nil {
+			log.Fatalf("failed to delete the previous DB Instance %s: %s\n", prevDBIdentifier, err)
+		}
+	} else if config.SourceDBClusterIdentifier != "" && config.DBClusterIdentifier != "" {
+		if err := rds.DeleteDBCluster(prevDBIdentifier); err != nil {
+			log.Fatalf("failed to delete the previous DB Cluster %s: %s\n", prevDBIdentifier, err)
+		}
 	}
 
 	return 0
