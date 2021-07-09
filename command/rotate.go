@@ -7,9 +7,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/munisystem/rosculus/aws/rds"
-	"github.com/munisystem/rosculus/deployment"
-	"github.com/munisystem/rosculus/dnsimple"
+	"github.com/munisystem/rosculus/config"
+	"github.com/munisystem/rosculus/database/rds"
+	"github.com/munisystem/rosculus/dns/dnsimple"
 	"github.com/munisystem/rosculus/lib/postgres"
 )
 
@@ -34,163 +34,69 @@ func (c *RotateCommand) Run(args []string) int {
 		return 1
 	}
 
-	dep, err := deployment.Load(bucket, name)
+	config, err := config.Load(bucket, name)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		return 1
 	}
 
-	var identifier string
-	if dep.Rollback {
-		identifier = dep.Previous.InstanceIdentifier
-	} else {
-		identifier = dep.Current.InstanceIdentifier
+	now := time.Now()
+	dbInstanceIdentifier := fmt.Sprintf("%s-%s", config.DBInstanceIdentifierBase, now.Format("20060102"))
+	prevDBInstanceIdentifier := fmt.Sprintf("%s-%s", config.DBInstanceIdentifierBase, now.Add(-24*time.Hour).Format("20060102"))
+
+	dbInstanceConfig := &rds.DBInstanceConfig{
+		SourceDBInstanceIdentifier: config.SourceDBInstanceIdentifier,
+		TargetDBInstanceIdentifier: dbInstanceIdentifier,
+		AvailabilityZone:           config.AvailabilityZone,
+		PubliclyAccessible:         config.PubliclyAccessible,
+		DBInstanceClass:            config.DBInstanceClass,
+		DBSubnetGroupName:          config.DBSubnetGroupName,
+		VpcSecurityGroupIds:        config.VPCSecurityGroupIds,
+		Tags:                       config.DBInstanceTags,
+		MasterUserPassword:         config.DBMasterUserPassword,
 	}
 
-	exist, err := rds.DBInstanceAlreadyExists(identifier)
+	instance, err := rds.CloneDBInstance(dbInstanceConfig)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		return 1
 	}
 
-	if exist == true {
-		fmt.Printf("'%s' is already exists, delete before to launch new DB instance\n", identifier)
-		prevDBInstances, err := rds.DescribeDBInstances(identifier)
-		if err != nil {
-			fmt.Fprintln(os.Stderr, err)
-			return 1
-		}
-
-		if len(prevDBInstances) != 0 {
-			if *prevDBInstances[0].DBInstanceStatus != "deleting" {
-				if _, err := rds.DeleteInstance(*prevDBInstances[0].DBInstanceIdentifier); err != nil {
-					fmt.Fprintln(os.Stderr, err)
-					return 1
-				}
-			}
-
-			if err = wait(rds.WaitDeleted, *prevDBInstances[0].DBInstanceIdentifier); err != nil {
-				fmt.Fprintln(os.Stderr, err)
-				return 1
-			}
-
-			fmt.Println()
-			fmt.Println("Deleted DB instance")
-		}
-	}
-
-	fmt.Printf("Launch new RDS Instance '%s' from '%s'\n", identifier, dep.SourceDBInstanceIdentifier)
-	dbInstance, err := rds.CopyInstance(
-		dep.SourceDBInstanceIdentifier,
-		identifier,
-		dep.AvailabilityZone,
-		dep.DBInstanceClass,
-		dep.DBSubnetGroupName,
-		dep.PubliclyAccessible,
-		dep.DBInstanceTags,
-	)
-	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		return 1
-	}
-	fmt.Println("Launched. Please Wait RDS Instance ready")
-
-	if err = wait(rds.WaitReady, *dbInstance.DBInstanceIdentifier); err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		return 1
-	}
-
-	fmt.Println()
-	fmt.Printf("%s is ready\n", *dbInstance.DBInstanceIdentifier)
-
-	if err = rds.AddSecurityGroups(*dbInstance.DBInstanceIdentifier, dep.VPCSecurityGroupIds); err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		return 1
-	}
-
-	fmt.Println("Attached security groups", dep.VPCSecurityGroupIds)
-
-	if dep.DBMasterUserPassword != "" {
-		if err = rds.ChangeMasterPassword(*dbInstance.DBInstanceIdentifier, dep.DBMasterUserPassword); err != nil {
-			fmt.Fprintln(os.Stderr, err)
-			return 1
-		}
-		fmt.Println("Changed Master User Password")
-	}
-
-	dbInstances, err := rds.DescribeDBInstances(*dbInstance.DBInstanceIdentifier)
-	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		return 1
-	}
-
-	if len(dbInstances) == 0 {
-		fmt.Fprintln(os.Stderr, fmt.Errorf("Not mutch RDS Instances Identifier %s", *dbInstance.DBInstanceIdentifier))
-		return 1
-	}
-
-	endpoint := *dbInstances[0].Endpoint.Address
-	port := *dbInstances[0].Endpoint.Port
-	user := *dbInstances[0].MasterUsername
-	database := *dbInstances[0].DBName
-
-	if len(dep.Queries) != 0 {
-		connectionString := fmt.Sprintf("postgres://%s:%s@%s:%d/%s", user, dep.DBMasterUserPassword, endpoint, port, database)
+	if len(config.Queries) != 0 {
+		connectionString := fmt.Sprintf(
+			"postgres://%s:%s@%s:%d/%s",
+			instance.User,
+			instance.Password,
+			instance.URL,
+			instance.Port,
+			instance.Database,
+		)
 		p := postgres.Initialize(connectionString)
 
-		if err := p.RunQueries(dep.Queries); err != nil {
+		if err := p.RunQueries(config.Queries); err != nil {
 			fmt.Fprintln(os.Stderr, err)
 			return 1
 		}
 	}
 
-	authToken := dep.DNSimple.AuthToken
-	accountId := dep.DNSimple.AccountID
-	domain := dep.DNSimple.Domain
-	recordId := dep.DNSimple.RecordID
-	recordName := dep.DNSimple.RecordName
-	ttl := dep.DNSimple.TTL
+	authToken := config.DNSimple.AuthToken
+	accountId := config.DNSimple.AccountID
+	domain := config.DNSimple.Domain
+	recordName := config.DNSimple.RecordName
+	ttl := config.DNSimple.TTL
 
-	if authToken != "" && accountId != "" && domain != "" && recordId != 0 && recordName != "" {
-		if err = dnsimple.UpdateRecord(authToken, accountId, domain, recordId, recordName, endpoint, ttl); err != nil {
-			fmt.Fprintln(os.Stderr, err)
-			return 1
-		}
-		fmt.Println("Updated DNS Record")
-	}
-
-	var curInstanceIdentifier string
-	var curEndpoint string
-	var prevInstanceIdentifier string
-	var prevEndpoint string
-	if dep.Rollback {
-		prevInstanceIdentifier = dep.Current.InstanceIdentifier
-		prevEndpoint = dep.Current.Endpoint
-		curInstanceIdentifier = dep.Previous.InstanceIdentifier
-		curEndpoint = endpoint
-	} else {
-		prevInstanceIdentifier = ""
-		prevEndpoint = ""
-		curInstanceIdentifier = dep.Current.InstanceIdentifier
-		curEndpoint = endpoint
-	}
-
-	prev := deployment.Previous{
-		InstanceIdentifier: prevInstanceIdentifier,
-		Endpoint:           prevEndpoint,
-	}
-
-	cur := deployment.Current{
-		InstanceIdentifier: curInstanceIdentifier,
-		Endpoint:           curEndpoint,
-	}
-
-	dep.Current = cur
-	dep.Previous = prev
-	if err = dep.Put(bucket, name); err != nil {
+	dnsClient := dnsimple.NewClient(authToken, accountId)
+	if err := dnsClient.UpdateRecord(domain, recordName, instance.URL, ttl); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		return 1
 	}
+	fmt.Println("Updated DNS Record")
+
+	if err := rds.DeleteDBInstance(prevDBInstanceIdentifier); err != nil {
+		fmt.Fprintln(os.Stderr, fmt.Errorf("Failed to delete the previous DB Instance %s", prevDBInstanceIdentifier))
+		return 1
+	}
+
 	return 0
 }
 
@@ -203,30 +109,4 @@ func (c *RotateCommand) Help() string {
 
 `
 	return strings.TrimSpace(helpText)
-}
-
-func wait(fn func(string) error, str string) error {
-	errCh := make(chan error, 2)
-	defer close(errCh)
-
-	go func() {
-		errCh <- fn(str)
-	}()
-
-	go func() {
-	loop:
-		for {
-			if len(errCh) > 0 {
-				break loop
-			}
-
-			fmt.Print(".")
-			time.Sleep(30 * time.Second)
-		}
-
-	}()
-
-	err := <-errCh
-
-	return err
 }

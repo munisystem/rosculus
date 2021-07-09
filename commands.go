@@ -7,18 +7,8 @@ import (
 
 func Commands(meta *command.Meta) map[string]cli.CommandFactory {
 	return map[string]cli.CommandFactory{
-		"new": func() (cli.Command, error) {
-			return &command.NewCommand{
-				Meta: *meta,
-			}, nil
-		},
 		"rotate": func() (cli.Command, error) {
 			return &command.RotateCommand{
-				Meta: *meta,
-			}, nil
-		},
-		"rollback": func() (cli.Command, error) {
-			return &command.RollbackCommand{
 				Meta: *meta,
 			}, nil
 		},

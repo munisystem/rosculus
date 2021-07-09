@@ -1,12 +1,14 @@
-package deployment
+package config
 
 import (
 	"github.com/munisystem/rosculus/aws/s3"
 	yaml "gopkg.in/yaml.v2"
 )
 
-type Deployment struct {
+type Config struct {
+	// SourceDBClusterIdentifier  string            `yaml:"SourceDBClusterIdentifier,omitempty"`
 	SourceDBInstanceIdentifier string            `yaml:"SourceDBInstanceIdentifier"`
+	DBInstanceIdentifierBase   string            `yaml:"DBInstanceIdentifierBase"`
 	DBMasterUserPassword       string            `yaml:"DBMasterUserPassword"`
 	DBInstanceTags             map[string]string `yaml:"DBInstanceTags"`
 	AvailabilityZone           string            `yaml:"AvailabilityZone"`
@@ -15,8 +17,6 @@ type Deployment struct {
 	DBInstanceClass            string            `yaml:"DBInstanceClass"`
 	VPCSecurityGroupIds        []string          `yaml:"VPCSecurityGroupIds"`
 	DNSimple                   DNSimple          `yaml:"DNSimple"`
-	Current                    Current           `yaml:"Current"`
-	Previous                   Previous          `yaml:"Previous"`
 	Rollback                   bool              `yaml:"Rollback"`
 	Queries                    []string          `yaml:"Queries"`
 }
@@ -30,18 +30,8 @@ type DNSimple struct {
 	TTL        int    `yaml:"TTL"`
 }
 
-type Current struct {
-	InstanceIdentifier string `yaml:"InstanceIdentifier"`
-	Endpoint           string `yaml:"Endpoint"`
-}
-
-type Previous struct {
-	InstanceIdentifier string `yaml:"InstanceIdentifier"`
-	Endpoint           string `yaml:"Endpoint"`
-}
-
-func Load(bucket, name string) (*Deployment, error) {
-	c := &Deployment{}
+func Load(bucket, name string) (*Config, error) {
+	c := &Config{}
 
 	key := name + ".yml"
 	buf, err := s3.Download(bucket, key)
@@ -55,18 +45,4 @@ func Load(bucket, name string) (*Deployment, error) {
 	}
 
 	return c, nil
-}
-
-func (dep *Deployment) Put(bucket, name string) error {
-	str, err := yaml.Marshal(dep)
-	if err != nil {
-		return err
-	}
-
-	key := name + ".yml"
-	if err = s3.Upload(bucket, key, []byte(str)); err != nil {
-		return err
-	}
-
-	return nil
 }
