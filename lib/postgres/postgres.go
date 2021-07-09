@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"log"
 	"time"
 
 	_ "github.com/lib/pq"
@@ -33,9 +34,8 @@ func (p *PostgreSQL) connection() (*sql.DB, error) {
 		return nil, err
 	}
 
-	fmt.Println("Please wait PostgreSQL ready")
 	if !waitReady(db) {
-		return nil, errors.New("Fail to connect PostgreSQL")
+		return nil, errors.New("failed to connect PostgreSQL")
 	}
 
 	return db, nil
@@ -72,7 +72,7 @@ func (p *PostgreSQL) RunQueries(queries []string) error {
 func waitReady(db *sql.DB) bool {
 	ready := false
 	for i := 0; i < RETRY; i++ {
-		fmt.Print(".")
+		log.Println("wait until PostgreSQL is ready...")
 		if err := db.Ping(); err == nil {
 			ready = true
 			break

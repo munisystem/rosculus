@@ -60,6 +60,7 @@ func (c *Client) getRecordID(ctx context.Context, domain, name string) (int64, e
 func (c *Client) createRecord(ctx context.Context, domain, name, value string, ttl int) error {
 	attributes := &dnsimple.ZoneRecordAttributes{
 		Name:    dnsimple.String(name),
+		Type:    "CNAME",
 		Content: value,
 		TTL:     ttl,
 	}

@@ -1,8 +1,8 @@
 package command
 
 import (
-	"errors"
 	"fmt"
+	"log"
 	"os"
 	"strings"
 	"time"
@@ -19,25 +19,21 @@ type RotateCommand struct {
 
 func (c *RotateCommand) Run(args []string) int {
 	if len(args) == 0 {
-		fmt.Fprintln(os.Stderr, errors.New("too few arguments"))
-		return 1
+		log.Fatalln("too few arguments")
 	} else if len(args) > 1 {
-		fmt.Fprintln(os.Stderr, errors.New("too many arguments"))
-		return 1
+		log.Fatalln("too many arguments")
 	}
 
 	name := args[0]
 
 	bucket := os.Getenv("AWS_S3_BUCKET_NAME")
 	if bucket == "" {
-		fmt.Fprintln(os.Stderr, errors.New("Please set s3 bucket name in AWS_S3_BUCKET_NAME"))
-		return 1
+		log.Fatalln("please set s3 bucket name in AWS_S3_BUCKET_NAME")
 	}
 
 	config, err := config.Load(bucket, name)
 	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		return 1
+		log.Fatalf("failed to load config file from S3: %s\n", err)
 	}
 
 	now := time.Now()
@@ -58,8 +54,7 @@ func (c *RotateCommand) Run(args []string) int {
 
 	instance, err := rds.CloneDBInstance(dbInstanceConfig)
 	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		return 1
+		log.Fatalf("failed to create Database: %s\n", err)
 	}
 
 	if len(config.Queries) != 0 {
@@ -74,9 +69,10 @@ func (c *RotateCommand) Run(args []string) int {
 		p := postgres.Initialize(connectionString)
 
 		if err := p.RunQueries(config.Queries); err != nil {
-			fmt.Fprintln(os.Stderr, err)
-			return 1
+			log.Fatalf("failed to execute queries: %s\n", err)
 		}
+
+		log.Println("executed queries")
 	}
 
 	authToken := config.DNSimple.AuthToken
@@ -87,14 +83,12 @@ func (c *RotateCommand) Run(args []string) int {
 
 	dnsClient := dnsimple.NewClient(authToken, accountId)
 	if err := dnsClient.UpdateRecord(domain, recordName, instance.URL, ttl); err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		return 1
+		log.Fatalf("failed to update DNS record %s: %s \n", recordName, err)
 	}
-	fmt.Println("Updated DNS Record")
+	log.Printf("updated DNS record %s.%s\n", recordName, domain)
 
 	if err := rds.DeleteDBInstance(prevDBInstanceIdentifier); err != nil {
-		fmt.Fprintln(os.Stderr, fmt.Errorf("Failed to delete the previous DB Instance %s", prevDBInstanceIdentifier))
-		return 1
+		log.Fatalf("failed to delete the previous DB Instance %s: %s\n", prevDBInstanceIdentifier, err)
 	}
 
 	return 0

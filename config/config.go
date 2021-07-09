@@ -6,7 +6,6 @@ import (
 )
 
 type Config struct {
-	// SourceDBClusterIdentifier  string            `yaml:"SourceDBClusterIdentifier,omitempty"`
 	SourceDBInstanceIdentifier string            `yaml:"SourceDBInstanceIdentifier"`
 	DBInstanceIdentifierBase   string            `yaml:"DBInstanceIdentifierBase"`
 	DBMasterUserPassword       string            `yaml:"DBMasterUserPassword"`
@@ -17,7 +16,6 @@ type Config struct {
 	DBInstanceClass            string            `yaml:"DBInstanceClass"`
 	VPCSecurityGroupIds        []string          `yaml:"VPCSecurityGroupIds"`
 	DNSimple                   DNSimple          `yaml:"DNSimple"`
-	Rollback                   bool              `yaml:"Rollback"`
 	Queries                    []string          `yaml:"Queries"`
 }
 

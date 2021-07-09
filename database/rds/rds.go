@@ -1,6 +1,8 @@
 package rds
 
 import (
+	"log"
+
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/request"
@@ -57,7 +59,7 @@ func CloneDBInstance(config *DBInstanceConfig) (*database.DBInstance, error) {
 	)
 	if instance, err = dbInstance(config.TargetDBInstanceIdentifier); err != nil {
 		return nil, err
-	} else if instance != nil {
+	} else if instance == nil {
 		input := &rds.RestoreDBInstanceToPointInTimeInput{
 			SourceDBInstanceIdentifier: aws.String(config.SourceDBInstanceIdentifier),
 			TargetDBInstanceIdentifier: aws.String(config.TargetDBInstanceIdentifier),
@@ -74,10 +76,13 @@ func CloneDBInstance(config *DBInstanceConfig) (*database.DBInstance, error) {
 			return nil, err
 		}
 		instance = resp.DBInstance
+		log.Printf("created RDS Instance %s\n", config.TargetDBInstanceIdentifier)
+	} else {
+		log.Printf("RDS Instance %s is already exists\n", config.TargetDBInstanceIdentifier)
+	}
 
-		if err := waitUntilDBInstanceAvailable(config.TargetDBInstanceIdentifier); err != nil {
-			return nil, err
-		}
+	if err := waitUntilDBInstanceAvailable(config.TargetDBInstanceIdentifier); err != nil {
+		return nil, err
 	}
 
 	if err := modifyDBInstance(config); err != nil {
@@ -94,13 +99,13 @@ func CloneDBInstance(config *DBInstanceConfig) (*database.DBInstance, error) {
 }
 
 func modifyDBInstance(config *DBInstanceConfig) error {
+	log.Printf("modify RDS Instance %s\n", config.TargetDBInstanceIdentifier)
 	cli := client()
 
 	input := &rds.ModifyDBInstanceInput{
 		DBInstanceIdentifier: aws.String(config.TargetDBInstanceIdentifier),
 		PubliclyAccessible:   aws.Bool(config.PubliclyAccessible),
 		DBInstanceClass:      aws.String(config.DBInstanceClass),
-		DBSubnetGroupName:    aws.String(config.DBSubnetGroupName),
 		VpcSecurityGroupIds:  config.vpcSecurityGroupIds(),
 		MasterUserPassword:   aws.String(config.MasterUserPassword),
 		ApplyImmediately:     aws.Bool(true),
@@ -109,6 +114,7 @@ func modifyDBInstance(config *DBInstanceConfig) error {
 	if _, err := cli.ModifyDBInstance(input); err != nil {
 		return err
 	}
+	log.Printf("modified RDS Instance %s\n", config.TargetDBInstanceIdentifier)
 
 	return waitUntilDBInstanceAvailable(config.TargetDBInstanceIdentifier)
 }
@@ -133,6 +139,7 @@ func DeleteDBInstance(dbInstanceIdentifier string) error {
 }
 
 func waitUntilDBInstanceAvailable(dbInstanceIdentifier string) error {
+	log.Printf("wait until RDS Instance %s is ready\n", dbInstanceIdentifier)
 	cli := client()
 
 	for {
@@ -146,20 +153,7 @@ func waitUntilDBInstanceAvailable(dbInstanceIdentifier string) error {
 		}
 		break
 	}
-
-	return nil
-}
-
-func WaitDeleted(dbInstanceIdentifier string) error {
-	cli := client()
-
-	params := &rds.DescribeDBInstancesInput{
-		DBInstanceIdentifier: aws.String(dbInstanceIdentifier),
-	}
-
-	if err := cli.WaitUntilDBInstanceDeleted(params); err != nil {
-		return err
-	}
+	log.Printf("RDS Instance %s is ready\n", dbInstanceIdentifier)
 
 	return nil
 }
