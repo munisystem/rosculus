@@ -317,7 +317,7 @@ func waitUntilDBClusterAvailable(dbClusterIdentifier string) error {
 	log.Printf("wait until Aurora Cluster %s is ready\n", dbClusterIdentifier)
 	cli := client()
 
-	maxAttempt := 30
+	maxAttempt := 120
 	for i := 0; i < maxAttempt; i++ {
 		resp, err := cli.DescribeDBClusters(&rds.DescribeDBClustersInput{DBClusterIdentifier: aws.String(dbClusterIdentifier)})
 		if err != nil {
